@@ -7,11 +7,18 @@ import kweb.*
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
+import mu.KotlinLogging
 import org.kohsuke.github.GitHub
 
 fun main() {
+    GitHubStatismics()
+}
 
-    Kweb(port = 16097, debug = true, plugins = listOf(fomanticUIPlugin)) {
+class GitHubStatismics {
+    private val logger = KotlinLogging.logger {}
+
+    val plugins = listOf(fomanticUIPlugin)
+    val server = Kweb(port = 16097, debug = true, plugins = plugins, buildPage = {
 
         doc.head {
             title().text("GitHub Statismics")
@@ -41,62 +48,63 @@ fun main() {
                 }
             }
         }
-    }
-}
+    })
 
-
-private fun ElementCreator<*>.pageBorderAndTitle(
-    username: KVar<String>,
-    content: ElementCreator<DivElement>.() -> Unit
-) {
-    div(fomantic.ui.main.container) {
-        div(fomantic.column) {
-            div(fomantic.ui.vertical.segment) {
-                div(fomantic.ui.message) {
-                    p().innerHTML(
-                        """
+    private fun ElementCreator<*>.pageBorderAndTitle(
+        username: KVar<String>,
+        content: ElementCreator<DivElement>.() -> Unit
+    ) {
+        div(fomantic.ui.main.container) {
+            div(fomantic.column) {
+                div(fomantic.ui.vertical.segment) {
+                    div(fomantic.ui.message) {
+                        p().innerHTML(
+                            """
                             A simple GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
                             """
-                            .trimIndent()
-                    )
+                                .trimIndent()
+                        )
+                    }
                 }
-            }
 
-            div(fomantic.ui.vertical.segment) {
-                h1(fomantic.ui.dividing.header).text(username)
-                content(this)
+                div(fomantic.ui.vertical.segment) {
+                    h1(fomantic.ui.dividing.header).text(username)
+                    content(this)
+                }
             }
         }
     }
-}
 
-private fun handleChooseUsername(input: InputElement) {
-    GlobalScope.launch {
-        val newItemText = input.getValue().await()
-        println("New username: $newItemText")
-        input.setValue("")
+    private fun handleChooseUsername(input: InputElement) {
+        GlobalScope.launch {
+            val newItemText = input.getValue().await()
+            println("New username: $newItemText")
+            input.setValue("")
+        }
+    }
+
+    fun getGitHub(): GitHub {
+        val github = GitHub.connectAnonymously()
+
+        println("Please enter a GitHub username:")
+        val username = readLine()
+
+        val user = github.getUser(username)
+        println("Username: ${user.name}")
+        println("Bio: ${user.bio}")
+        println("Organisations: ${user.organizations}")
+        println("Follower count: ${user.followersCount}")
+        println("Following count: ${user.followingCount}")
+
+        print("Followers: ")
+        user.followers.forEach { follower ->
+            if (follower.name != null)
+                print("\"${follower.name}\" ")
+        }
+        println()
+
+        return github
     }
 }
 
-fun getGitHub(): GitHub {
-    val github = GitHub.connectAnonymously()
 
-    println("Please enter a GitHub username:")
-    val username = readLine()
-
-    val user = github.getUser(username)
-    println("Username: ${user.name}")
-    println("Bio: ${user.bio}")
-    println("Organisations: ${user.organizations}")
-    println("Follower count: ${user.followersCount}")
-    println("Following count: ${user.followingCount}")
-
-    print("Followers: ")
-    user.followers.forEach { follower ->
-        if (follower.name != null)
-            print("\"${follower.name}\" ")
-    }
-    println()
-
-    return github
-}
