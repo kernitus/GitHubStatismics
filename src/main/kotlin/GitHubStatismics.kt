@@ -7,10 +7,9 @@ import kweb.*
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
+import kweb.state.property
 import mu.KotlinLogging
 import org.kohsuke.github.GitHub
-import org.kohsuke.github.GitHubBuilder
-import java.io.IOException
 
 fun main() {
     GitHubStatismics()
@@ -28,35 +27,11 @@ class GitHubStatismics {
         }
 
         doc.body {
-            val usernameKVar = KVar("")
-
-            pageBorderAndTitle(usernameKVar) {
-                div(fomantic.content) {
-
-                    div(fomantic.ui.action.input) {
-                        h2(fomantic.ui.header).text("Please enter a GitHub username: ")
-                        val input = input(type = InputType.text, placeholder = "Username")
-                        input.value = usernameKVar
-                        input.on.keypress { ke ->
-                            if (ke.code == "Enter") {
-                                handleChooseUsername(input)
-                            }
-                        }
-                        button(fomantic.ui.button).text("Run").apply {
-                            on.click {
-                                handleChooseUsername(input)
-                            }
-                        }
-                    }
-                }
-            }
+            pageBorderAndTitle()
         }
     })
 
-    private fun ElementCreator<*>.pageBorderAndTitle(
-        username: KVar<String>,
-        content: ElementCreator<DivElement>.() -> Unit
-    ) {
+    private fun ElementCreator<*>.pageBorderAndTitle() {
         div(fomantic.ui.main.container) {
             div(fomantic.column) {
                 div(fomantic.ui.vertical.segment) {
@@ -74,36 +49,114 @@ class GitHubStatismics {
                 }
 
                 div(fomantic.ui.vertical.segment) {
-                    h1(fomantic.ui.dividing.header).text(username)
-                    content(this)
+                    val usernameKVar = KVar("")
+                    val userKVar = KVar(WatchedUser())
+                    usernameInput(usernameKVar, userKVar)
+                    h1(fomantic.ui.dividing.header).text(usernameKVar)
+                    userStatsTable(userKVar)
                 }
             }
         }
     }
 
-    private fun handleChooseUsername(input: InputElement) {
-        GlobalScope.launch {
-            val username = input.getValue().await()
-            println("New username: $username")
-            input.setValue("")
-            getStatistics(username)
+    private fun ElementCreator<*>.usernameInput(usernameKVar: KVar<String>, userKVar: KVar<WatchedUser>) {
+        div(fomantic.content) {
+            div(fomantic.ui.action.input) {
+                h2(fomantic.ui.header).text("Please enter a GitHub username: ")
+                val input = input(type = InputType.text, placeholder = "Username")
+                input.value = usernameKVar
+                input.on.keypress { ke ->
+                    if (ke.code == "Enter") {
+                        handleChooseUsername(input, userKVar)
+                    }
+                }
+                button(fomantic.ui.button).text("Run").apply {
+                    on.click {
+                        handleChooseUsername(input, userKVar)
+                    }
+                }
+            }
         }
     }
 
-    private fun getStatistics(username: String) {
-        val user = github.getUser(username)
-        println("Username: ${user.name}")
-        println("Bio: ${user.bio}")
-        println("Organisations: ${user.organizations}")
-        println("Follower count: ${user.followersCount}")
-        println("Following count: ${user.followingCount}")
+    private fun getUser(username: String) = github.getUser(username)
 
-        print("Followers: ")
-        user.followers.forEach { follower ->
-            if (follower.name != null)
-                print("\"${follower.name}\" ")
+    data class WatchedUser(
+        var name: String = "",
+        var bio: String = "",
+        var location: String = "",
+        var hireable: Boolean = false,
+        var followers: String = "",
+        var follows: String = "",
+        var repositories: String = ""
+    )
+
+    private fun ElementCreator<*>.userStatsTable(user: KVar<WatchedUser>) {
+
+        table(fomantic.ui.celled.table).new {
+            thead().new {
+                tr().new {
+                    th().text("Key")
+                    th().text("Value")
+                }
+            }
+            tbody().new {
+                tr().new {
+                    td().text("Name")
+                    td().text(user.property(WatchedUser::name))
+                }
+                tr().new {
+                    td().text("Bio")
+                    td().text(user.property(WatchedUser::bio))
+                }
+                tr().new {
+                    td().text("Location")
+                    td().text(user.property(WatchedUser::location))
+                }
+                tr().new {
+                    td().text("Is Hireable")
+                    td().text(user.property(WatchedUser::hireable).value.toString())
+                }
+                tr().new {
+                    td().text("Followers")
+                    td().text(user.property(WatchedUser::followers))
+                }
+                tr().new {
+                    td().text("Follows")
+                    td().text(user.property(WatchedUser::follows))
+                }
+                tr().new {
+                    td().text("Repositories")
+                    td().text(user.property(WatchedUser::repositories))
+                }
+            }
         }
-        println()
+    }
+
+    private fun handleChooseUsername(input: InputElement, userKVar: KVar<WatchedUser>) {
+        GlobalScope.launch {
+            val username = input.getValue().await()
+            input.setValue("")
+
+            val user = getUser(username)
+
+            userKVar.property(WatchedUser::name).value = user.name ?: ""
+            userKVar.property(WatchedUser::bio).value = user.bio ?: ""
+            userKVar.property(WatchedUser::location).value = user.location ?: ""
+            userKVar.property(WatchedUser::hireable).value = user.isHireable
+
+            var followers = ""
+            user.followers.forEach{followers += "${it.name?: ""} "}
+            userKVar.property(WatchedUser::followers).value = followers
+
+            var follows = ""
+            user.follows.forEach{follows += "${it.name?: ""} "}
+            userKVar.property(WatchedUser::follows).value = follows
+
+            var repositories = ""
+            user.repositories.keys.forEach{repositories += "$it " }
+            userKVar.property(WatchedUser::repositories).value = repositories
+        }
     }
 }
 
