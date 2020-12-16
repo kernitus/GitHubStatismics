@@ -9,6 +9,8 @@ import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import mu.KotlinLogging
 import org.kohsuke.github.GitHub
+import org.kohsuke.github.GitHubBuilder
+import java.io.IOException
 
 fun main() {
     GitHubStatismics()
@@ -16,8 +18,9 @@ fun main() {
 
 class GitHubStatismics {
     private val logger = KotlinLogging.logger {}
+    private val github = GitHub.connect()
 
-    val plugins = listOf(fomanticUIPlugin)
+    private val plugins = listOf(fomanticUIPlugin)
     val server = Kweb(port = 16097, debug = true, plugins = plugins, buildPage = {
 
         doc.head {
@@ -61,6 +64,9 @@ class GitHubStatismics {
                         p().innerHTML(
                             """
                             A simple GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
+                            <p>
+                            Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
+                            OAuth Personal Access Token with no extra scopes is recommended.
                             """
                                 .trimIndent()
                         )
@@ -77,18 +83,14 @@ class GitHubStatismics {
 
     private fun handleChooseUsername(input: InputElement) {
         GlobalScope.launch {
-            val newItemText = input.getValue().await()
-            println("New username: $newItemText")
+            val username = input.getValue().await()
+            println("New username: $username")
             input.setValue("")
+            getStatistics(username)
         }
     }
 
-    fun getGitHub(): GitHub {
-        val github = GitHub.connectAnonymously()
-
-        println("Please enter a GitHub username:")
-        val username = readLine()
-
+    private fun getStatistics(username: String) {
         val user = github.getUser(username)
         println("Username: ${user.name}")
         println("Bio: ${user.bio}")
@@ -102,8 +104,6 @@ class GitHubStatismics {
                 print("\"${follower.name}\" ")
         }
         println()
-
-        return github
     }
 }
 
