@@ -7,7 +7,6 @@ import kweb.*
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
-import mu.KotlinLogging
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -15,7 +14,6 @@ fun main() {
 }
 
 class GitHubStatismics {
-    private val logger = KotlinLogging.logger {}
     private val github = GitHub.connect()
 
     private val plugins = listOf(fomanticUIPlugin)
@@ -144,7 +142,12 @@ class GitHubStatismics {
                 tableBody.removeChildren() // Clear all rows
                 ghPersonSet.forEach { follower ->
                     tr().new {
-                        td().text(follower.name ?: follower.login)
+                        td().new {
+                            a(fomantic.ui.image.label).new {
+                                img(mapOf("src" to follower.avatarUrl))
+                                span().text(follower.name ?: follower.login)
+                            }
+                        }
                     }
                 }
             }
@@ -165,9 +168,11 @@ class GitHubStatismics {
         tableBody.new {
             watchedUser.repositories.addListener { _, repositoryMap ->
                 tableBody.removeChildren() // Clear all rows
-                repositoryMap.forEach { (k, _) ->
+                repositoryMap.forEach { (name, _) ->
                     tr().new {
-                        td().text(k)
+                        td().new {
+                            a(fomantic.ui.image.label).text(name)
+                        }
                     }
                 }
             }
@@ -191,7 +196,12 @@ class GitHubStatismics {
                 tableBody.removeChildren() // Clear all rows
                 ghPersonSet.forEach { follows ->
                     tr().new {
-                        td().text(follows.name ?: follows.login)
+                        td().new {
+                            a(fomantic.ui.image.label).new {
+                                img(mapOf("src" to follows.avatarUrl))
+                                span().text(follows.name ?: follows.login)
+                            }
+                        }
                     }
                 }
             }
