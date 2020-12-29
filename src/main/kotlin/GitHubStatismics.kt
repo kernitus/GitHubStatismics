@@ -131,7 +131,10 @@ class GitHubStatismics {
     private fun ElementCreator<*>.followersTable(watchedUser: WatchedUser) {
         thead().new {
             tr().new {
-                th().text("Followers")
+                th().new {
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.followers.map { it.size.toString() })
+                    span().text("Followers")
+                }
             }
         }
         val tableBody = tbody()
@@ -151,7 +154,10 @@ class GitHubStatismics {
     private fun ElementCreator<*>.repositoriesTable(watchedUser: WatchedUser) {
         thead().new {
             tr().new {
-                th().text("Repositories")
+                th().new {
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.repositories.map { it.size.toString() })
+                    span().text("Repositories")
+                }
             }
         }
         val tableBody = tbody()
@@ -172,7 +178,10 @@ class GitHubStatismics {
     private fun ElementCreator<*>.followsTable(watchedUser: WatchedUser) {
         thead().new {
             tr().new {
-                th().text("Follows")
+                th().new {
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.follows.map { it.size.toString() })
+                    span().text("Follows")
+                }
             }
         }
         val tableBody = tbody()
