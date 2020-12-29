@@ -8,6 +8,9 @@ import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import mu.KotlinLogging
+import org.kohsuke.github.GHPersonSet
+import org.kohsuke.github.GHRepository
+import org.kohsuke.github.GHUser
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -56,7 +59,7 @@ class GitHubStatismics {
                     watchedUser.show.addListener { _, show ->
                         if (show) {
                             userStatsHeader(watchedUser)
-                            userStatsTable(watchedUser)
+                            userStats(watchedUser)
                         }
                     }
                 }
@@ -94,22 +97,19 @@ class GitHubStatismics {
         var bio: KVar<String> = KVar(""),
         var location: KVar<String> = KVar(""),
         var avatarUrl: KVar<String> = KVar(""),
-        var followers: KVar<String> = KVar(""),
-        var follows: KVar<String> = KVar(""),
-        var repositories: KVar<String> = KVar("")
+        var followers: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
+        var follows: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
+        var repositories: KVar<Map<String, GHRepository>> = KVar(emptyMap())
     )
 
     private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser) {
         // 1 size 4 column, centre-aligned
-        val grid = div(fomantic.ui.four.column.centered.grid) {
+        div(fomantic.ui.four.column.centered.grid) {
             div(fomantic.row) {
                 div(fomantic.column) {
                     // Avatar image
                     val image = img(fomantic.ui.medium.circular.image)
                     image.setAttribute("src", watchedUser.avatarUrl)
-                    val path = System.getProperty("user.dir")
-
-                    println("Working Directory = $path")
                 }
             }
             div(fomantic.row) {
@@ -129,39 +129,76 @@ class GitHubStatismics {
         }
     }
 
-    private fun ElementCreator<*>.userStatsTable(watchedUser: WatchedUser) {
+    private fun ElementCreator<*>.userStats(watchedUser: WatchedUser) {
+        div(fomantic.ui.centered.grid) {
+            div(fomantic.four.wide.column) {
+                followsTable(watchedUser)
+            }
+            div(fomantic.four.wide.column) {
+                followersTable(watchedUser)
+            }
+            div(fomantic.four.wide.column) {
+                repositoriesTable(watchedUser)
+            }
+        }
+    }
 
-        table(fomantic.ui.celled.table).new {
-            thead().new {
-                tr().new {
-                    th().text("Key")
-                    th().text("Value")
+    private fun ElementCreator<*>.followersTable(watchedUser: WatchedUser) {
+        thead().new {
+            tr().new {
+                th().text("Followers")
+            }
+        }
+        val tableBody = tbody()
+
+        tableBody.new {
+            watchedUser.follows.addListener { _, ghPersonSet ->
+                tableBody.removeChildren() // Clear all rows
+                ghPersonSet.forEach { follower ->
+                    tr().new {
+                        td().text(follower.name ?: follower.login)
+                    }
                 }
             }
-            tbody().new {
-                tr().new {
-                    td().text("Name")
-                    td().text(watchedUser.name)
+        }
+    }
+
+    private fun ElementCreator<*>.repositoriesTable(watchedUser: WatchedUser) {
+        thead().new {
+            tr().new {
+                th().text("Repositories")
+            }
+        }
+        val tableBody = tbody()
+
+        tableBody.new {
+            watchedUser.repositories.addListener { _, repositoryMap ->
+                tableBody.removeChildren() // Clear all rows
+                repositoryMap.forEach { (k, _) ->
+                    tr().new {
+                        td().text(k)
+                    }
                 }
-                tr().new {
-                    td().text("Bio")
-                    td().text(watchedUser.bio)
-                }
-                tr().new {
-                    td().text("Location")
-                    td().text(watchedUser.location)
-                }
-                tr().new {
-                    td().text("Followers")
-                    td().text(watchedUser.followers)
-                }
-                tr().new {
-                    td().text("Follows")
-                    td().text(watchedUser.follows)
-                }
-                tr().new {
-                    td().text("Repositories")
-                    td().text(watchedUser.repositories)
+            }
+        }
+    }
+
+
+    private fun ElementCreator<*>.followsTable(watchedUser: WatchedUser) {
+        thead().new {
+            tr().new {
+                th().text("Follows")
+            }
+        }
+        val tableBody = tbody()
+
+        tableBody.new {
+            watchedUser.followers.addListener { _, ghPersonSet ->
+                tableBody.removeChildren() // Clear all rows
+                ghPersonSet.forEach { follows ->
+                    tr().new {
+                        td().text(follows.name ?: follows.login)
+                    }
                 }
             }
         }
@@ -180,18 +217,9 @@ class GitHubStatismics {
             watchedUser.bio.value = user.bio
             watchedUser.location.value = user.location
             watchedUser.avatarUrl.value = user.avatarUrl
-
-            var followers = ""
-            user.followers.forEach { followers += "${it.name ?: ""} " }
-            watchedUser.followers.value = followers
-
-            var follows = ""
-            user.follows.forEach { follows += "${it.name ?: ""} " }
-            watchedUser.follows.value = follows
-
-            var repositories = ""
-            user.repositories.keys.forEach { repositories += "$it " }
-            watchedUser.repositories.value = repositories
+            watchedUser.followers.value = user.followers
+            watchedUser.follows.value = user.follows
+            watchedUser.repositories.value = user.repositories
         }
     }
 }
