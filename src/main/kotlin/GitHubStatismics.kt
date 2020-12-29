@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import kweb.*
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
+import kweb.state.KVal
 import kweb.state.KVar
 import kweb.state.property
 import mu.KotlinLogging
@@ -50,16 +51,19 @@ class GitHubStatismics {
 
                 div(fomantic.ui.vertical.segment) {
                     val usernameKVar = KVar("")
-                    val userKVar = KVar(WatchedUser())
-                    usernameInput(usernameKVar, userKVar)
+                    val watchedUser = WatchedUser()
+                    usernameInput(usernameKVar, watchedUser)
                     h1(fomantic.ui.dividing.header).text(usernameKVar)
-                    userStatsTable(userKVar)
+                    userStatsHeader(watchedUser)
+                    userStatsTable(watchedUser)
                 }
             }
         }
     }
 
-    private fun ElementCreator<*>.usernameInput(usernameKVar: KVar<String>, userKVar: KVar<WatchedUser>) {
+    private fun ElementCreator<*>.usernameInput(usernameKVar: KVar<String>, watchedUser: WatchedUser) {
+        //TODO use search input text field
+        //TODO also allow searching for repos https://fomantic-ui.com/elements/input.html
         div(fomantic.content) {
             div(fomantic.ui.action.input) {
                 h2(fomantic.ui.header).text("Please enter a GitHub username: ")
@@ -67,12 +71,12 @@ class GitHubStatismics {
                 input.value = usernameKVar
                 input.on.keypress { ke ->
                     if (ke.code == "Enter") {
-                        handleChooseUsername(input, userKVar)
+                        handleChooseUsername(input, watchedUser)
                     }
                 }
                 button(fomantic.ui.button).text("Run").apply {
                     on.click {
-                        handleChooseUsername(input, userKVar)
+                        handleChooseUsername(input, watchedUser)
                     }
                 }
             }
@@ -82,16 +86,23 @@ class GitHubStatismics {
     private fun getUser(username: String) = github.getUser(username)
 
     data class WatchedUser(
-        var name: String = "",
-        var bio: String = "",
-        var location: String = "",
-        var hireable: Boolean = false,
-        var followers: String = "",
-        var follows: String = "",
-        var repositories: String = ""
+        var name: KVar<String> = KVar(""),
+        var bio: KVar<String> = KVar(""),
+        var location: KVar<String> = KVar(""),
+        var avatarUrl: KVar<String> = KVar(""),
+        var followers: KVar<String> = KVar(""),
+        var follows: KVar<String> = KVar(""),
+        var repositories: KVar<String> = KVar("")
     )
 
-    private fun ElementCreator<*>.userStatsTable(user: KVar<WatchedUser>) {
+    private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser){
+        div(fomantic.content) {
+            val image = img(fomantic.ui.medium.circular.image)
+            image.setAttribute("src", watchedUser.avatarUrl)
+        }
+    }
+
+    private fun ElementCreator<*>.userStatsTable(watchedUser: WatchedUser){
 
         table(fomantic.ui.celled.table).new {
             thead().new {
@@ -103,59 +114,56 @@ class GitHubStatismics {
             tbody().new {
                 tr().new {
                     td().text("Name")
-                    td().text(user.property(WatchedUser::name))
+                    td().text(watchedUser.name)
                 }
                 tr().new {
                     td().text("Bio")
-                    td().text(user.property(WatchedUser::bio))
+                    td().text(watchedUser.bio)
                 }
                 tr().new {
                     td().text("Location")
-                    td().text(user.property(WatchedUser::location))
-                }
-                tr().new {
-                    td().text("Is Hireable")
-                    td().text(user.property(WatchedUser::hireable).value.toString())
+                    td().text(watchedUser.location)
                 }
                 tr().new {
                     td().text("Followers")
-                    td().text(user.property(WatchedUser::followers))
+                    td().text(watchedUser.followers)
                 }
                 tr().new {
                     td().text("Follows")
-                    td().text(user.property(WatchedUser::follows))
+                    td().text(watchedUser.follows)
                 }
                 tr().new {
                     td().text("Repositories")
-                    td().text(user.property(WatchedUser::repositories))
+                    td().text(watchedUser.repositories)
                 }
             }
         }
     }
 
-    private fun handleChooseUsername(input: InputElement, userKVar: KVar<WatchedUser>) {
+    private fun handleChooseUsername(input: InputElement,  watchedUser: WatchedUser) {
         GlobalScope.launch {
             val username = input.getValue().await()
             input.setValue("")
 
             val user = getUser(username)
+            // TODO if user doesn't exist show error
 
-            userKVar.property(WatchedUser::name).value = user.name ?: ""
-            userKVar.property(WatchedUser::bio).value = user.bio ?: ""
-            userKVar.property(WatchedUser::location).value = user.location ?: ""
-            userKVar.property(WatchedUser::hireable).value = user.isHireable
+            watchedUser.name.value = user.name
+            watchedUser.bio.value = user.bio
+            watchedUser.location.value = user.location
+            watchedUser.avatarUrl.value = user.avatarUrl
 
             var followers = ""
             user.followers.forEach{followers += "${it.name?: ""} "}
-            userKVar.property(WatchedUser::followers).value = followers
+            watchedUser.followers.value = followers
 
             var follows = ""
             user.follows.forEach{follows += "${it.name?: ""} "}
-            userKVar.property(WatchedUser::follows).value = follows
+            watchedUser.follows.value = follows
 
             var repositories = ""
             user.repositories.keys.forEach{repositories += "$it " }
-            userKVar.property(WatchedUser::repositories).value = repositories
+            watchedUser.repositories.value = repositories
         }
     }
 }
