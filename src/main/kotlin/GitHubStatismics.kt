@@ -52,8 +52,13 @@ class GitHubStatismics {
                     val watchedUser = WatchedUser()
                     usernameInput(usernameKVar, watchedUser)
                     h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
-                    userStatsHeader(watchedUser)
-                    userStatsTable(watchedUser)
+
+                    watchedUser.show.addListener { _, show ->
+                        if (show) {
+                            userStatsHeader(watchedUser)
+                            userStatsTable(watchedUser)
+                        }
+                    }
                 }
             }
         }
@@ -84,6 +89,7 @@ class GitHubStatismics {
     private fun getUser(username: String) = github.getUser(username)
 
     data class WatchedUser(
+        var show: KVar<Boolean> = KVar(false),
         var name: KVar<String> = KVar(""),
         var bio: KVar<String> = KVar(""),
         var location: KVar<String> = KVar(""),
@@ -95,12 +101,15 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser) {
         // 1 size 4 column, centre-aligned
-        div(fomantic.ui.four.column.centered.grid) {
+        val grid = div(fomantic.ui.four.column.centered.grid) {
             div(fomantic.row) {
                 div(fomantic.column) {
                     // Avatar image
                     val image = img(fomantic.ui.medium.circular.image)
                     image.setAttribute("src", watchedUser.avatarUrl)
+                    val path = System.getProperty("user.dir")
+
+                    println("Working Directory = $path")
                 }
             }
             div(fomantic.row) {
@@ -166,6 +175,7 @@ class GitHubStatismics {
             val user = getUser(username)
             // TODO if user doesn't exist show error
 
+            watchedUser.show.value = true
             watchedUser.name.value = user.name
             watchedUser.bio.value = user.bio
             watchedUser.location.value = user.location
