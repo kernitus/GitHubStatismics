@@ -6,9 +6,7 @@ import kotlinx.coroutines.launch
 import kweb.*
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
-import kweb.state.KVal
 import kweb.state.KVar
-import kweb.state.property
 import mu.KotlinLogging
 import org.kohsuke.github.GitHub
 
@@ -53,7 +51,7 @@ class GitHubStatismics {
                     val usernameKVar = KVar("")
                     val watchedUser = WatchedUser()
                     usernameInput(usernameKVar, watchedUser)
-                    h1(fomantic.ui.dividing.header).text(usernameKVar)
+                    h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
                     userStatsHeader(watchedUser)
                     userStatsTable(watchedUser)
                 }
@@ -95,14 +93,34 @@ class GitHubStatismics {
         var repositories: KVar<String> = KVar("")
     )
 
-    private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser){
-        div(fomantic.content) {
-            val image = img(fomantic.ui.medium.circular.image)
-            image.setAttribute("src", watchedUser.avatarUrl)
+    private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser) {
+        // 1 size 4 column, centre-aligned
+        div(fomantic.ui.four.column.centered.grid) {
+            div(fomantic.row) {
+                div(fomantic.column) {
+                    // Avatar image
+                    val image = img(fomantic.ui.medium.circular.image)
+                    image.setAttribute("src", watchedUser.avatarUrl)
+                }
+            }
+            div(fomantic.row) {
+                div(fomantic.column) {
+                    // Bio
+                    div(fomantic.ui.teal.horizontal.label).text("Bio")
+                    span().text(watchedUser.bio)
+                }
+            }
+            div(fomantic.row) {
+                div(fomantic.column) {
+                    // Location
+                    div(fomantic.ui.teal.horizontal.label).text("Location")
+                    span().text(watchedUser.location)
+                }
+            }
         }
     }
 
-    private fun ElementCreator<*>.userStatsTable(watchedUser: WatchedUser){
+    private fun ElementCreator<*>.userStatsTable(watchedUser: WatchedUser) {
 
         table(fomantic.ui.celled.table).new {
             thead().new {
@@ -140,7 +158,7 @@ class GitHubStatismics {
         }
     }
 
-    private fun handleChooseUsername(input: InputElement,  watchedUser: WatchedUser) {
+    private fun handleChooseUsername(input: InputElement, watchedUser: WatchedUser) {
         GlobalScope.launch {
             val username = input.getValue().await()
             input.setValue("")
@@ -154,15 +172,15 @@ class GitHubStatismics {
             watchedUser.avatarUrl.value = user.avatarUrl
 
             var followers = ""
-            user.followers.forEach{followers += "${it.name?: ""} "}
+            user.followers.forEach { followers += "${it.name ?: ""} " }
             watchedUser.followers.value = followers
 
             var follows = ""
-            user.follows.forEach{follows += "${it.name?: ""} "}
+            user.follows.forEach { follows += "${it.name ?: ""} " }
             watchedUser.follows.value = follows
 
             var repositories = ""
-            user.repositories.keys.forEach{repositories += "$it " }
+            user.repositories.keys.forEach { repositories += "$it " }
             watchedUser.repositories.value = repositories
         }
     }
