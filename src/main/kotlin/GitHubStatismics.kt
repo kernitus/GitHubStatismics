@@ -50,7 +50,7 @@ class GitHubStatismics {
                     }
                 }
 
-                div(fomantic.ui.vertical.segment) {
+                div(fomantic.ui.center.aligned.vertical.segment) {
                     val usernameKVar = KVar("")
                     val watchedUser = WatchedUser()
                     usernameInput(usernameKVar, watchedUser)
@@ -68,22 +68,21 @@ class GitHubStatismics {
     }
 
     private fun ElementCreator<*>.usernameInput(usernameKVar: KVar<String>, watchedUser: WatchedUser) {
-        //TODO use search input text field
-        //TODO also allow searching for repos https://fomantic-ui.com/elements/input.html
-        div(fomantic.content) {
-            div(fomantic.ui.action.input) {
-                h2(fomantic.ui.header).text("Please enter a GitHub username: ")
-                val input = input(type = InputType.text, placeholder = "Username")
-                input.value = usernameKVar
-                input.on.keypress { ke ->
-                    if (ke.code == "Enter") {
-                        handleChooseUsername(input, watchedUser)
-                    }
+        div(fomantic.ui.centered.action.input) {
+            val input = input(type = InputType.text, placeholder = "Search")
+            select(fomantic.ui.compact.selection.dropdown) {
+                option().text("Username")
+                option().text("Repository")
+            }
+            input.value = usernameKVar
+            input.on.keypress { ke ->
+                if (ke.code == "Enter") {
+                    handleChooseUsername(input, watchedUser)
                 }
-                button(fomantic.ui.button).text("Run").apply {
-                    on.click {
-                        handleChooseUsername(input, watchedUser)
-                    }
+            }
+            button(fomantic.ui.button).text("Search").apply {
+                on.click {
+                    handleChooseUsername(input, watchedUser)
                 }
             }
         }
