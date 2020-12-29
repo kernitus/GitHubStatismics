@@ -137,7 +137,7 @@ class GitHubStatismics {
         val tableBody = tbody()
 
         tableBody.new {
-            watchedUser.follows.addListener { _, ghPersonSet ->
+            watchedUser.followers.addListener { _, ghPersonSet ->
                 tableBody.removeChildren() // Clear all rows
                 ghPersonSet.forEach { follower ->
                     tr().new {
@@ -178,7 +178,7 @@ class GitHubStatismics {
         val tableBody = tbody()
 
         tableBody.new {
-            watchedUser.followers.addListener { _, ghPersonSet ->
+            watchedUser.follows.addListener { _, ghPersonSet ->
                 tableBody.removeChildren() // Clear all rows
                 ghPersonSet.forEach { follows ->
                     tr().new {
