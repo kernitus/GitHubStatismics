@@ -8,9 +8,6 @@ import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import mu.KotlinLogging
-import org.kohsuke.github.GHPersonSet
-import org.kohsuke.github.GHRepository
-import org.kohsuke.github.GHUser
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -89,17 +86,6 @@ class GitHubStatismics {
     }
 
     private fun getUser(username: String) = github.getUser(username)
-
-    data class WatchedUser(
-        var show: KVar<Boolean> = KVar(false),
-        var name: KVar<String> = KVar(""),
-        var bio: KVar<String> = KVar(""),
-        var location: KVar<String> = KVar(""),
-        var avatarUrl: KVar<String> = KVar(""),
-        var followers: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
-        var follows: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
-        var repositories: KVar<Map<String, GHRepository>> = KVar(emptyMap())
-    )
 
     private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser) {
         // 1 size 4 column, centre-aligned
