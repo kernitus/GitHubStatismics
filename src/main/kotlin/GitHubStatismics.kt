@@ -5,6 +5,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kweb.*
 import kweb.html.Document
+import kweb.plugins.chartJs.chartJs
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import org.kohsuke.github.GitHub
@@ -17,7 +18,7 @@ class GitHubStatismics {
     private val github = GitHub.connect()
     private lateinit var document: Document
 
-    private val plugins = listOf(fomanticUIPlugin)
+    private val plugins = listOf(fomanticUIPlugin, chartJs)
     val server = Kweb(port = 16097, debug = true, plugins = plugins, buildPage = {
         document = doc
 
@@ -52,13 +53,40 @@ class GitHubStatismics {
                     val usernameKVar = watchedUser.name
                     usernameInput(watchedUser)
 
-                    watchedUser.show.addListener { _, show ->
-                        if (show) {
-                            h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
-                            userStatsHeader(watchedUser)
-                            userStats(watchedUser)
+                    div(fomantic.ui.top.attached.tabular.menu) {
+                        val statsTab = a(fomantic.item.active)
+                        statsTab.setAttributeRaw("data-tab", "one")
+                        statsTab.text("Stats")
+                        val graphsTab = a(fomantic.item)
+                        graphsTab.setAttributeRaw("data-tab", "two")
+                        graphsTab.text("Graphs")
+                    }
+
+                    val statsTab = div(fomantic.ui.bottom.attached.tab.segment.active)
+                    statsTab.setAttributeRaw("data-tab", "one")
+                    statsTab.new {
+                        watchedUser.show.addListener { _, show ->
+                            if (show) {
+                                h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
+                                userStatsHeader(watchedUser)
+                                userStats(watchedUser)
+                            }
                         }
                     }
+
+                    val graphsTab = div(fomantic.ui.bottom.attached.tab.segment)
+                    graphsTab.setAttributeRaw("data-tab", "two")
+                    graphsTab.new {
+                        p().text("insert graphs")
+                    }
+
+                    // JavaScript needed to make the tabs interactive
+                    document.body.execute(
+                        """
+                        ${'$'}('.menu .item').tab();  
+                    """.trimIndent()
+                    )
+
                 }
             }
         }
@@ -181,6 +209,10 @@ class GitHubStatismics {
                             a(fomantic.ui.image.label).text(repo.name)
                         }
                     }
+
+                    val langs: Map<String, Long> = repo.listLanguages()
+                    langs.forEach { (lang, amount) -> println("${repo.name} $lang $amount") }
+
                 }
             }
         }
