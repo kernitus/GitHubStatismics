@@ -150,12 +150,14 @@ class GitHubStatismics {
                 ghPersonSet.forEach { follower ->
                     tr().new {
                         td().new {
-                            val link = a(fomantic.ui.image.label)
-                            link.new {
-                                img(mapOf("src" to follower.avatarUrl))
+                            div(fomantic.ui.image.label).new {
+                                val link = a()
+                                link.setAttributeRaw("href", follower.htmlUrl)
+                                link.new {
+                                    img(mapOf("src" to follower.avatarUrl))
+                                }
                                 span().text(follower.name ?: follower.login)
                             }
-                            link.setAttributeRaw("href", follower.htmlUrl)
                         }
                     }
                 }
@@ -206,8 +208,12 @@ class GitHubStatismics {
                 ghPersonSet.forEach { follows ->
                     tr().new {
                         td().new {
-                            a(fomantic.ui.image.label).new {
-                                img(mapOf("src" to follows.avatarUrl))
+                            div(fomantic.ui.image.label).new {
+                                val link = a()
+                                link.setAttributeRaw("href", follows.htmlUrl)
+                                link.new {
+                                    img(mapOf("src" to follows.avatarUrl))
+                                }
                                 span().text(follows.name ?: follows.login)
                             }
                         }
@@ -222,13 +228,13 @@ class GitHubStatismics {
             val username = input.getValue().await()
             input.setValue("")
 
-            watchedUser.show.value = true
             watchedUser.followers.value = GHPersonSet()
             watchedUser.follows.value = GHPersonSet()
             watchedUser.repositories.value = emptyMap()
 
             try {
                 val user = getUser(username)
+                watchedUser.show.value = true
                 watchedUser.name.value = user.name
                 watchedUser.bio.value = user.bio
                 watchedUser.location.value = user.location
