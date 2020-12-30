@@ -7,7 +7,6 @@ import kweb.*
 import kweb.html.Document
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
-import org.kohsuke.github.GHPersonSet
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -131,7 +130,7 @@ class GitHubStatismics {
         thead().new {
             tr().new {
                 th().new {
-                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.followers.map { it.size.toString() })
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.followersCount)
                     span().text("Followers")
                 }
             }
@@ -166,7 +165,7 @@ class GitHubStatismics {
         thead().new {
             tr().new {
                 th().new {
-                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.repositories.map { it.size.toString() })
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.repositoriesCount)
                     span().text("Repositories")
                 }
             }
@@ -174,12 +173,12 @@ class GitHubStatismics {
         val tableBody = tbody()
 
         tableBody.new {
-            watchedUser.repositories.addListener { _, repositoryMap ->
+            watchedUser.repositories.addListener { _, repositoriesList ->
                 tableBody.removeChildren() // Clear all rows
-                repositoryMap.forEach { (name, _) ->
+                repositoriesList.forEach { repo ->
                     tr().new {
                         td().new {
-                            a(fomantic.ui.image.label).text(name)
+                            a(fomantic.ui.image.label).text(repo.name)
                         }
                     }
                 }
@@ -192,7 +191,7 @@ class GitHubStatismics {
         thead().new {
             tr().new {
                 th().new {
-                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.follows.map { it.size.toString() })
+                    div(fomantic.ui.teal.horizontal.label).text(watchedUser.followingCount)
                     span().text("Follows")
                 }
             }
@@ -232,9 +231,9 @@ class GitHubStatismics {
     }
 
     private fun setWatchedUser(username: String, watchedUser: WatchedUser) {
-        watchedUser.followers.value = GHPersonSet()
-        watchedUser.follows.value = GHPersonSet()
-        watchedUser.repositories.value = emptyMap()
+        watchedUser.followers.value = emptyList()
+        watchedUser.follows.value = emptyList()
+        watchedUser.repositories.value = emptyList()
 
         try {
             val user = getUser(username)
