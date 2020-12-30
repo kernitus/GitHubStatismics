@@ -39,10 +39,10 @@ class GitHubStatismics {
                     div(fomantic.ui.message) {
                         p().innerHTML(
                             """
-                            A simple GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
+                            A simple GitHub statistics visualiser. Enter a username or repository below to view some statistics.
                             <p>
                             Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
-                            OAuth Personal Access Token with no extra scopes is recommended.
+                            An OAuth Personal Access Token with no additional scopes is recommended.
                             """
                                 .trimIndent()
                         )
