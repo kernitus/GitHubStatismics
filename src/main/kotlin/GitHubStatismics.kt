@@ -7,7 +7,6 @@ import kweb.*
 import kweb.html.Document
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
-import kweb.state.KVar
 import org.kohsuke.github.GHPersonSet
 import org.kohsuke.github.GitHub
 
@@ -50,13 +49,13 @@ class GitHubStatismics {
                 }
 
                 div(fomantic.ui.center.aligned.vertical.segment) {
-                    val usernameKVar = KVar("")
                     val watchedUser = WatchedUser()
-                    usernameInput(usernameKVar, watchedUser)
-                    h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
+                    val usernameKVar = watchedUser.name
+                    usernameInput(watchedUser)
 
                     watchedUser.show.addListener { _, show ->
                         if (show) {
+                            h1(fomantic.ui.centered.dividing.header).text(usernameKVar)
                             userStatsHeader(watchedUser)
                             userStats(watchedUser)
                         }
@@ -66,19 +65,14 @@ class GitHubStatismics {
         }
     }
 
-    private fun ElementCreator<*>.usernameInput(usernameKVar: KVar<String>, watchedUser: WatchedUser) {
+    private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.action.input) {
             val input = input(type = InputType.text, placeholder = "Search")
             select(fomantic.ui.compact.selection.dropdown) {
                 option().text("Username")
                 option().text("Repository")
             }
-            input.value = usernameKVar
-            input.on.keypress { ke ->
-                if (ke.code == "Enter") {
-                    handleChooseUsername(input, watchedUser)
-                }
-            }
+            input.on.keypress { if (it.code == "Enter") handleChooseUsername(input, watchedUser) }
             button(fomantic.ui.button).text("Search").apply {
                 on.click {
                     handleChooseUsername(input, watchedUser)
@@ -156,7 +150,10 @@ class GitHubStatismics {
                                 link.new {
                                     img(mapOf("src" to follower.avatarUrl))
                                 }
-                                span().text(follower.name ?: follower.login)
+                                a().new {
+                                    span().text(follower.name ?: follower.login)
+                                        .apply { on.click { setWatchedUser(follower.login, watchedUser) } }
+                                }
                             }
                         }
                     }
@@ -214,7 +211,10 @@ class GitHubStatismics {
                                 link.new {
                                     img(mapOf("src" to follows.avatarUrl))
                                 }
-                                span().text(follows.name ?: follows.login)
+                                a().new {
+                                    span().text(follows.name ?: follows.login)
+                                        .apply { on.click { setWatchedUser(follows.login, watchedUser) } }
+                                }
                             }
                         }
                     }
@@ -227,25 +227,21 @@ class GitHubStatismics {
         GlobalScope.launch {
             val username = input.getValue().await()
             input.setValue("")
+            setWatchedUser(username, watchedUser)
+        }
+    }
 
-            watchedUser.followers.value = GHPersonSet()
-            watchedUser.follows.value = GHPersonSet()
-            watchedUser.repositories.value = emptyMap()
+    private fun setWatchedUser(username: String, watchedUser: WatchedUser) {
+        watchedUser.followers.value = GHPersonSet()
+        watchedUser.follows.value = GHPersonSet()
+        watchedUser.repositories.value = emptyMap()
 
-            try {
-                val user = getUser(username)
-                watchedUser.show.value = true
-                watchedUser.name.value = user.name
-                watchedUser.bio.value = user.bio
-                watchedUser.location.value = user.location
-                watchedUser.pageUrl.value = user.htmlUrl
-                watchedUser.avatarUrl.value = user.avatarUrl
-                watchedUser.followers.value = user.followers
-                watchedUser.follows.value = user.follows
-                watchedUser.repositories.value = user.repositories
-            } catch (e: Exception) {
-                sendToast("error", "User load error", "Something went wrong loading the user!", "white")
-            }
+        try {
+            val user = getUser(username)
+            watchedUser.setValuesFromGHUser(user)
+        } catch (e: Exception) {
+            sendToast("error", "User load error", "Something went wrong loading the user!", "white")
+            e.printStackTrace()
         }
     }
 
