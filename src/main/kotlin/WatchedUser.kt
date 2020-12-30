@@ -4,6 +4,7 @@ import kweb.state.KVar
 import org.kohsuke.github.GHPersonSet
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GHUser
+import java.net.URL
 
 data class WatchedUser(
     var show: KVar<Boolean> = KVar(false),
@@ -13,5 +14,6 @@ data class WatchedUser(
     var avatarUrl: KVar<String> = KVar(""),
     var followers: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet()),
     var follows: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet()),
-    var repositories: KVar<Map<String, GHRepository>> = KVar(emptyMap())
+    var repositories: KVar<Map<String, GHRepository>> = KVar(emptyMap()),
+    var pageUrl: KVar<URL> = KVar(URL("http://0.0.0.0:16097"))
 )

@@ -39,7 +39,7 @@ class GitHubStatismics {
                     div(fomantic.ui.message) {
                         p().innerHTML(
                             """
-                            A red GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
+                            A simple GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
                             <p>
                             Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
                             OAuth Personal Access Token with no extra scopes is recommended.
@@ -94,9 +94,12 @@ class GitHubStatismics {
         div(fomantic.ui.four.column.centered.grid) {
             div(fomantic.row) {
                 div(fomantic.column) {
-                    // Avatar image
-                    val image = img(fomantic.ui.medium.circular.image)
-                    image.setAttribute("src", watchedUser.avatarUrl)
+                    val link = a()
+                    link.new {
+                        val image = img(fomantic.ui.medium.circular.image)
+                        image.setAttribute("src", watchedUser.avatarUrl)
+                    }
+                    link.setAttribute("href", watchedUser.pageUrl)
                 }
             }
             div(fomantic.row) {
@@ -229,6 +232,7 @@ class GitHubStatismics {
                 watchedUser.name.value = user.name
                 watchedUser.bio.value = user.bio
                 watchedUser.location.value = user.location
+                watchedUser.pageUrl.value = user.htmlUrl
                 watchedUser.avatarUrl.value = user.avatarUrl
                 watchedUser.followers.value = user.followers
                 watchedUser.follows.value = user.follows
