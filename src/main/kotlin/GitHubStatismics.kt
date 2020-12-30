@@ -4,9 +4,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kweb.*
+import kweb.html.Document
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
+import org.kohsuke.github.GHPersonSet
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -15,9 +17,11 @@ fun main() {
 
 class GitHubStatismics {
     private val github = GitHub.connect()
+    private lateinit var document: Document
 
     private val plugins = listOf(fomanticUIPlugin)
     val server = Kweb(port = 16097, debug = true, plugins = plugins, buildPage = {
+        document = doc
 
         doc.head {
             title().text("GitHub Statismics")
@@ -35,7 +39,7 @@ class GitHubStatismics {
                     div(fomantic.ui.message) {
                         p().innerHTML(
                             """
-                            A simple GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
+                            A red GitHub statistics visualiser. Enter a username below to see some statistics associated with the account.
                             <p>
                             Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
                             OAuth Personal Access Token with no extra scopes is recommended.
@@ -143,10 +147,12 @@ class GitHubStatismics {
                 ghPersonSet.forEach { follower ->
                     tr().new {
                         td().new {
-                            a(fomantic.ui.image.label).new {
+                            val link = a(fomantic.ui.image.label)
+                            link.new {
                                 img(mapOf("src" to follower.avatarUrl))
                                 span().text(follower.name ?: follower.login)
                             }
+                            link.setAttributeRaw("href", follower.htmlUrl)
                         }
                     }
                 }
@@ -213,17 +219,36 @@ class GitHubStatismics {
             val username = input.getValue().await()
             input.setValue("")
 
-            val user = getUser(username)
-            // TODO if user doesn't exist show error
-
             watchedUser.show.value = true
-            watchedUser.name.value = user.name
-            watchedUser.bio.value = user.bio
-            watchedUser.location.value = user.location
-            watchedUser.avatarUrl.value = user.avatarUrl
-            watchedUser.followers.value = user.followers
-            watchedUser.follows.value = user.follows
-            watchedUser.repositories.value = user.repositories
+            watchedUser.followers.value = GHPersonSet()
+            watchedUser.follows.value = GHPersonSet()
+            watchedUser.repositories.value = emptyMap()
+
+            try {
+                val user = getUser(username)
+                watchedUser.name.value = user.name
+                watchedUser.bio.value = user.bio
+                watchedUser.location.value = user.location
+                watchedUser.avatarUrl.value = user.avatarUrl
+                watchedUser.followers.value = user.followers
+                watchedUser.follows.value = user.follows
+                watchedUser.repositories.value = user.repositories
+            } catch (e: Exception) {
+                //document.body.jquery('toast')
+                //TODO toast with error
+                /*
+                $('body')
+  .toast({
+    class: 'error',
+    message: `An error occured !`
+    showProgress: 'bottom'
+  })
+;
+                 */
+            }
+            // TODO if user doesn't exist show error
+            // TODO reset the variables before changing the values
+
         }
     }
 }

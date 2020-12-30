@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.4.21"
+    application
 }
 
 repositories {
@@ -27,3 +28,8 @@ val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
 }
+
+application {
+    mainClass.set("main.kotlin.GitHubStatismicsKt")
+}
+

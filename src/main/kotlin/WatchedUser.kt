@@ -11,7 +11,7 @@ data class WatchedUser(
     var bio: KVar<String> = KVar(""),
     var location: KVar<String> = KVar(""),
     var avatarUrl: KVar<String> = KVar(""),
-    var followers: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
-    var follows: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet<GHUser>()),
+    var followers: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet()),
+    var follows: KVar<GHPersonSet<GHUser>> = KVar(GHPersonSet()),
     var repositories: KVar<Map<String, GHRepository>> = KVar(emptyMap())
 )
