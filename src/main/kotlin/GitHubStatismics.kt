@@ -238,22 +238,15 @@ class GitHubStatismics {
                 watchedUser.follows.value = user.follows
                 watchedUser.repositories.value = user.repositories
             } catch (e: Exception) {
-                //document.body.jquery('toast')
-                //TODO toast with error
-                /*
-                $('body')
-  .toast({
-    class: 'error',
-    message: `An error occured !`
-    showProgress: 'bottom'
-  })
-;
-                 */
+                sendToast("error", "User load error", "Something went wrong loading the user!", "white")
             }
-            // TODO if user doesn't exist show error
-            // TODO reset the variables before changing the values
-
         }
+    }
+
+    private fun sendToast(className: String, title: String, message: String, progressColour: String) {
+        document.body.execute(
+            "$('body').toast({showProgress: 'bottom', classProgress: 'i$progressColour', message: '$message', class: '$className', title: '$title'});"
+        )
     }
 }
 
