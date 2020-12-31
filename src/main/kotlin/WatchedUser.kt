@@ -38,3 +38,16 @@ data class WatchedUser(
         repositories.value = if (repositoriesIterable.hasNext()) repositoriesIterable.nextPage() else emptyList()
     }
 }
+
+// For use with ChartJS
+fun List<GHRepository>.toNamesList(): List<String> = map { it.name }
+fun List<GHRepository>.toLanguagesMap(): Map<String, Long> {
+    val map: MutableMap<String, Long> = HashMap()
+    forEach { repo ->
+        val langMap: Map<String, Long> = repo.listLanguages()
+        langMap.forEach { (lang, amount) ->
+            map[lang] = map[lang]?.plus(amount) ?: 0L
+        }
+    }
+    return map
+}

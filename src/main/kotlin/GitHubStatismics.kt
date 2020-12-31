@@ -8,7 +8,9 @@ import kweb.html.Document
 import kweb.plugins.chartJs.chartJs
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
+import kweb.state.KVar
 import org.kohsuke.github.GitHub
+import java.awt.Color
 
 fun main() {
     GitHubStatismics()
@@ -77,7 +79,7 @@ class GitHubStatismics {
                     val graphsTab = div(fomantic.ui.bottom.attached.tab.segment)
                     graphsTab.setAttributeRaw("data-tab", "two")
                     graphsTab.new {
-                        p().text("insert graphs")
+                        graphsTab(watchedUser)
                     }
 
                     // JavaScript needed to make the tabs interactive
@@ -90,6 +92,38 @@ class GitHubStatismics {
                 }
             }
         }
+    }
+
+    private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
+        p().text("Cool graphs below!")
+        // TODO use grid to show the various charts
+        // TODO drilldown piechart with total language from all repos
+        // TODO filter total by author
+        // TODO checkbox to include / exclude forked repos
+        languagesPieChart(watchedUser)
+    }
+
+    private fun ElementCreator<*>.languagesPieChart(watchedUser: WatchedUser) {
+        val repos = watchedUser.repositories
+        val dataList: KVar<DataList.Numbers> = KVar(DataList.Numbers(10, 20, 30))
+
+        val canvas = canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400)
+        val languagesPieChart = Chart(
+            canvas, ChartConfig(
+                ChartType.pie,
+                ChartData(
+                    repos.value.toNamesList(),
+                    listOf(
+                        DataSet(
+                            dataList = dataList.value,
+                            backgroundColours = arrayOf(Color.RED, Color.BLUE, Color.YELLOW)
+                        ),
+                    )
+                )
+            )
+        )
+
+        repos.addListener { _, _ -> languagesPieChart.setPieData(repos.value.toLanguagesMap()) }
     }
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {
@@ -209,10 +243,6 @@ class GitHubStatismics {
                             a(fomantic.ui.image.label).text(repo.name)
                         }
                     }
-
-                    val langs: Map<String, Long> = repo.listLanguages()
-                    langs.forEach { (lang, amount) -> println("${repo.name} $lang $amount") }
-
                 }
             }
         }
