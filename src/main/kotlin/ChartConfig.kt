@@ -32,14 +32,15 @@ class Chart(private val canvas: CanvasElement, chartConfig: ChartConfig) {
 
 data class ChartConfig(val type: ChartType, val data: ChartData)
 
+private fun randomColour(): Color =
+    Color(
+        Random.nextInt(0, 255),
+        Random.nextInt(0, 255),
+        Random.nextInt(0, 255)
+    )
+
 private fun dataSetFromList(list: Array<out Number>): DataSet {
-    val colours: Array<Color> = Array(list.size) {
-        Color(
-            Random.nextInt(0, 255),
-            Random.nextInt(0, 255),
-            Random.nextInt(0, 255)
-        )
-    }
+    val colours: Array<Color> = Array(list.size) { randomColour() }
     return DataSet(dataList = DataList.Numbers(*list), backgroundColours = colours)
 }
 

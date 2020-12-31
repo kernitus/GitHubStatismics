@@ -96,11 +96,40 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
         p().text("Cool graphs below!")
-        // TODO use grid to show the various charts
-        // TODO drilldown piechart with total language from all repos
-        // TODO filter total by author
-        // TODO checkbox to include / exclude forked repos
-        languagesPieChart(watchedUser)
+        div(fomantic.ui.centered.grid) {
+            div(fomantic.eight.wide.column) {
+                languagesPieChart(watchedUser)
+            }
+            div(fomantic.eight.wide.column) {
+                languagesByAuthorChart(watchedUser)
+            }
+        }
+        // TODO filter commits by author and show bytes per language
+        // TODO filter commits by author and show amount of commits by repo
+        // TODO without forked repos
+    }
+
+    private fun ElementCreator<*>.languagesByAuthorChart(watchedUser: WatchedUser) {
+        val repos = watchedUser.repositories
+        val dataList: KVar<DataList.Numbers> = KVar(DataList.Numbers(100, 400, 600))
+
+        val canvas = canvas(mapOf("id" to "languagesByAuthorPieChart"), width = 400, height = 400)
+        val languagesPieChart = Chart(
+            canvas, ChartConfig(
+                ChartType.pie,
+                ChartData(
+                    repos.value.toNamesList(),
+                    listOf(
+                        DataSet(
+                            dataList = dataList.value,
+                            backgroundColours = arrayOf(Color.RED, Color.BLUE, Color.YELLOW)
+                        ),
+                    )
+                )
+            )
+        )
+
+        repos.addListener { _, _ -> languagesPieChart.setPieData(repos.value.toLanguagesMap()) }
     }
 
     private fun ElementCreator<*>.languagesPieChart(watchedUser: WatchedUser) {
