@@ -350,7 +350,8 @@ class GitHubStatismics {
                 repositoriesList.forEach { repo ->
                     tr().new {
                         td().new {
-                            a(fomantic.ui.image.label).text(repo.name)
+                            val link = a(fomantic.ui.image.label).text(repo.name)
+                            link.setAttributeRaw("href", repo.htmlUrl)
                         }
                     }
                 }
