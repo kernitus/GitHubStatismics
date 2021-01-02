@@ -3,13 +3,17 @@ package main.kotlin
 import kweb.CanvasElement
 import kweb.plugins.chartJs.ChartJsPlugin
 import kweb.state.KVal
+import kweb.state.KVar
 import kweb.util.random
 import kweb.util.toJson
 import java.awt.Color
 import java.time.Instant
 import kotlin.random.Random
 
-abstract class Chart(private val canvas: CanvasElement, chartConfig: ChartConfig) {
+abstract class Chart(
+    private val canvas: CanvasElement, chartConfig: ChartConfig,
+    var loading: KVar<Boolean> = KVar(false)
+) {
     private val chartVarName = "c${random.nextInt(10000000)}"
 
     init {
@@ -35,6 +39,7 @@ class PieChart(canvas: CanvasElement, data: ChartData? = null) :
 
     constructor(canvas: CanvasElement, data: KVal<PieData>) : this(canvas, data.value.toChartData()) {
         data.addListener { _, newData ->
+            loading.value = false
             setData(newData.toChartData())
             update()
         }
@@ -51,6 +56,7 @@ class LineChart(canvas: CanvasElement, data: ChartData? = null) :
 
     constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
         data.addListener { _, newData ->
+            loading.value = false
             setData(newData)
             update()
         }
@@ -62,6 +68,7 @@ class ScatterChart(canvas: CanvasElement, data: ChartData? = null) :
 
     constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
         data.addListener { _, newData ->
+            loading.value = false
             setData(newData)
             update()
         }

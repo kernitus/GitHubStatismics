@@ -6,6 +6,12 @@ import org.kohsuke.github.GHUser
 import java.net.URL
 
 data class WatchedUser(
+    val loading: KVar<Boolean> = KVar(false),
+    val areImageBioLocationLoading: KVar<Boolean> = KVar(false),
+    val isFollowsLoading: KVar<Boolean> = KVar(false),
+    val isFollowersLoading: KVar<Boolean> = KVar(false),
+    val isRepositoriesLoading: KVar<Boolean> = KVar(false),
+
     var show: KVar<Boolean> = KVar(false),
     var name: KVar<String> = KVar(""),
     var bio: KVar<String> = KVar(""),
@@ -31,12 +37,21 @@ data class WatchedUser(
     var commitsPerWeekAggregate: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
+        // Set to loading
         show.value = true
+        loading.value = true
+        areImageBioLocationLoading.value = true
+        isFollowersLoading.value = true
+        isFollowsLoading.value = true
+        isRepositoriesLoading.value = true
+
         name.value = user.name ?: user.login
         bio.value = user.bio ?: ""
         location.value = user.location ?: ""
         pageUrl.value = user.htmlUrl ?: URL("http://0.0.0.0:16097")
         avatarUrl.value = user.avatarUrl ?: ""
+        areImageBioLocationLoading.value = false
+
         followersCount.value = user.followersCount.toString()
         followingCount.value = user.followingCount.toString()
         repositoriesCount.value = user.publicRepoCount.toString()
@@ -44,10 +59,15 @@ data class WatchedUser(
         // Grab only the first few of each of these to save on API calls
         val followersIterable = user.listFollowers().withPageSize(30).iterator()
         followers.value = if (followersIterable.hasNext()) followersIterable.nextPage() else emptyList()
+        isFollowersLoading.value = false
+
         val followsIterable = user.listFollows().withPageSize(30).iterator()
         follows.value = if (followsIterable.hasNext()) followsIterable.nextPage() else emptyList()
+        isFollowsLoading.value = false
+
         val repositoriesIterable = user.listRepositories().withPageSize(50).iterator()
         repositories.value = if (repositoriesIterable.hasNext()) repositoriesIterable.nextPage() else emptyList()
+        isRepositoriesLoading.value = false
 
         // Language by amount of bytes
         val languageBytesMap: MutableMap<String, Long> = mutableMapOf()
@@ -101,6 +121,7 @@ data class WatchedUser(
         )
         commitsPerWeekAggregate.value = ChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
+        loading.value = false
     }
 
     private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
@@ -108,6 +129,5 @@ data class WatchedUser(
         repositories.value.filter { property(it) > 0 }.forEach { valueMap[it.name] = property(it) }
         dataKVar.value = PieChart.PieData(valueMap.keys, mutableListOf(DataList.Numbers(valueMap.values)))
     }
-
 }
 

@@ -101,12 +101,14 @@ class GitHubStatismics {
             lineChartContainer(
                 "commitsPerWeek",
                 "Amount of commits per week for all users for the past year",
-                watchedUser.commitsPerWeek
+                watchedUser.commitsPerWeek,
+                watchedUser.loading
             )
             lineChartContainer(
                 "commitsPerWeekAggregate",
                 "Amount of commits per week for the past year",
-                watchedUser.commitsPerWeekAggregate
+                watchedUser.commitsPerWeekAggregate,
+                watchedUser.loading
             )
         }
     }
@@ -114,38 +116,84 @@ class GitHubStatismics {
     private fun ElementCreator<*>.pieChartContainer(
         chartId: String,
         label: String,
-        chartDataKVar: KVar<PieChart.PieData>
+        chartDataKVar: KVar<PieChart.PieData>,
+        loading: KVar<Boolean>
     ) {
         div(fomantic.eight.wide.column) {
-            div(fomantic.ui.center.aligned.segment) {
-                PieChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+            val segment = div(fomantic.ui.disabled.center.aligned.segment)
+            segment.new {
+                val chart = PieChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
                 label(fomantic.ui.horizontal.label).text(label)
+                chart.loading.addListener { _, isLoading ->
+                    segment.removeClasses("disabled")
+                    if (isLoading) segment.addClasses("loading")
+                    else segment.removeClasses("loading")
+                }
+                loading.addListener { _, isLoading -> chart.loading.value = isLoading }
             }
         }
     }
 
     private fun ElementCreator<*>.pieChartsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            pieChartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
-            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
-            pieChartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
-            pieChartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
-            pieChartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
-            pieChartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
+            pieChartContainer(
+                "languageBytes",
+                "Languages by amount of bytes",
+                watchedUser.languageBytesData,
+                watchedUser.loading
+            )
+            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData, watchedUser.loading)
+            pieChartContainer(
+                "forksPerRepo",
+                "Amount of forks per repo",
+                watchedUser.forksCountPerRepoData,
+                watchedUser.loading
+            )
+            pieChartContainer(
+                "stargazerPerRepo",
+                "Amount of stargazers per repo",
+                watchedUser.stargazersPerRepoData,
+                watchedUser.loading
+            )
+            pieChartContainer(
+                "watchersPerRepo",
+                "Amount of watchers per repo",
+                watchedUser.watchersPerRepoData,
+                watchedUser.loading
+            )
+            pieChartContainer(
+                "openIssuesPerRepo",
+                "Amount of open issues per repo",
+                watchedUser.openIssuesPerRepoData,
+                watchedUser.loading
+            )
             pieChartContainer(
                 "subscribersPerRepo",
                 "Amount of subscribers per repo",
-                watchedUser.subscribersPerRepoData
+                watchedUser.subscribersPerRepoData,
+                watchedUser.loading
             )
         }
     }
 
 
-    private fun ElementCreator<*>.lineChartContainer(chartId: String, label: String, chartDataKVar: KVar<ChartData>) {
+    private fun ElementCreator<*>.lineChartContainer(
+        chartId: String,
+        label: String,
+        chartDataKVar: KVar<ChartData>,
+        loading: KVar<Boolean>
+    ) {
         div(fomantic.ten.wide.column) {
-            div(fomantic.ui.center.aligned.segment) {
-                LineChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+            val segment = div(fomantic.ui.center.aligned.segment)
+            segment.new {
+                val chart = LineChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
                 label(fomantic.ui.horizontal.label).text(label)
+                chart.loading.addListener { _, isLoading ->
+                    segment.removeClasses("disabled")
+                    if (isLoading) segment.addClasses("loading")
+                    else segment.removeClasses("loading")
+                }
+                loading.addListener { _, isLoading -> chart.loading.value = isLoading }
             }
         }
     }
@@ -153,12 +201,20 @@ class GitHubStatismics {
     private fun ElementCreator<*>.scatterChartContainer(
         chartId: String,
         label: String,
-        chartDataKVar: KVar<ChartData>
+        chartDataKVar: KVar<ChartData>,
+        loading: KVar<Boolean>
     ) {
         div(fomantic.eight.wide.column) {
-            div(fomantic.ui.center.aligned.segment) {
-                ScatterChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+            val segment = div(fomantic.ui.center.aligned.segment)
+            segment.new {
+                val chart = ScatterChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
                 label(fomantic.ui.horizontal.label).text(label)
+                chart.loading.addListener { _, isLoading ->
+                    segment.removeClasses("disabled")
+                    if (isLoading) segment.addClasses("loading")
+                    else segment.removeClasses("loading")
+                }
+                loading.addListener { _, isLoading -> chart.loading.value = isLoading }
             }
         }
     }
@@ -182,32 +238,39 @@ class GitHubStatismics {
     private fun getUser(username: String) = github.getUser(username)
 
     private fun ElementCreator<*>.userStatsHeader(watchedUser: WatchedUser) {
-        // 1 size 4 column, centre-aligned
-        div(fomantic.ui.four.column.centered.grid) {
-            div(fomantic.row) {
-                div(fomantic.column) {
-                    val link = a()
-                    link.new {
-                        val image = img(fomantic.ui.medium.circular.image)
-                        image.setAttribute("src", watchedUser.avatarUrl)
+        val segment = div(fomantic.ui.disabled.center.aligned.segment)
+        segment.new {
+            div(fomantic.ui.four.column.centered.grid) {
+                div(fomantic.row) {
+                    div(fomantic.column) {
+                        val link = a()
+                        link.new {
+                            val image = img(fomantic.ui.medium.circular.image)
+                            image.setAttribute("src", watchedUser.avatarUrl)
+                        }
+                        link.setAttribute("href", watchedUser.pageUrl)
                     }
-                    link.setAttribute("href", watchedUser.pageUrl)
+                }
+                div(fomantic.row) {
+                    div(fomantic.column) {
+                        // Bio
+                        div(fomantic.ui.teal.horizontal.label).text("Bio")
+                        span().text(watchedUser.bio)
+                    }
+                }
+                div(fomantic.row) {
+                    div(fomantic.column) {
+                        // Location
+                        div(fomantic.ui.teal.horizontal.label).text("Location")
+                        span().text(watchedUser.location)
+                    }
                 }
             }
-            div(fomantic.row) {
-                div(fomantic.column) {
-                    // Bio
-                    div(fomantic.ui.teal.horizontal.label).text("Bio")
-                    span().text(watchedUser.bio)
-                }
-            }
-            div(fomantic.row) {
-                div(fomantic.column) {
-                    // Location
-                    div(fomantic.ui.teal.horizontal.label).text("Location")
-                    span().text(watchedUser.location)
-                }
-            }
+        }
+        watchedUser.areImageBioLocationLoading.addListener { _, isLoading ->
+            segment.removeClasses("disabled")
+            if (isLoading) segment.addClasses("loading")
+            else segment.removeClasses("loading")
         }
     }
 
@@ -231,6 +294,11 @@ class GitHubStatismics {
                 th().new {
                     div(fomantic.ui.teal.horizontal.label).text(watchedUser.followersCount)
                     span().text("Followers")
+                    val loader = div(fomantic.ui.loader.inline.small.double)
+                    watchedUser.isFollowersLoading.addListener { _, isLoading ->
+                        if (isLoading) loader.addClasses("active")
+                        else loader.removeClasses("active")
+                    }
                 }
             }
         }
@@ -266,6 +334,11 @@ class GitHubStatismics {
                 th().new {
                     div(fomantic.ui.teal.horizontal.label).text(watchedUser.repositoriesCount)
                     span().text("Repositories")
+                    val loader = div(fomantic.ui.loader.inline.small.double)
+                    watchedUser.isRepositoriesLoading.addListener { _, isLoading ->
+                        if (isLoading) loader.addClasses("active")
+                        else loader.removeClasses("active")
+                    }
                 }
             }
         }
@@ -292,6 +365,11 @@ class GitHubStatismics {
                 th().new {
                     div(fomantic.ui.teal.horizontal.label).text(watchedUser.followingCount)
                     span().text("Follows")
+                    val loader = div(fomantic.ui.loader.inline.small.double)
+                    watchedUser.isFollowsLoading.addListener { _, isLoading ->
+                        if (isLoading) loader.addClasses("active")
+                        else loader.removeClasses("active")
+                    }
                 }
             }
         }
@@ -331,9 +409,6 @@ class GitHubStatismics {
 
     private fun setWatchedUser(username: String, watchedUser: WatchedUser) {
         GlobalScope.launch {
-            watchedUser.followers.value = emptyList()
-            watchedUser.follows.value = emptyList()
-            watchedUser.repositories.value = emptyList()
 
             try {
                 val user = getUser(username)
