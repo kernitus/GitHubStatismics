@@ -8,6 +8,7 @@ import kweb.html.Document
 import kweb.plugins.chartJs.chartJs
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
+import kweb.state.KVar
 import org.kohsuke.github.GitHub
 
 fun main() {
@@ -94,25 +95,24 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            div(fomantic.eight.wide.column) {
-                div(fomantic.ui.center.aligned.segment) {
-                    PieChart(
-                        canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400),
-                        watchedUser.languageBytesData
-                    )
-                    label(fomantic.ui.horizontal.label).text("Languages by amount of bytes")
-                }
-            }
-            div(fomantic.eight.wide.column) {
-                div(fomantic.ui.center.aligned.segment) {
-                    PieChart(
-                        canvas(mapOf("id" to "forksPerRepoPieChart"), width = 400, height = 400),
-                        watchedUser.cloneTrafficPerRepoData
-                    )
-                    label(fomantic.ui.horizontal.label).text("Amount of forks per repo")
-                }
+            chartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
+            chartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
+            chartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
+        }
+    }
+
+    private fun ElementCreator<*>.chartContainer(
+        chartId: String,
+        label: String,
+        chartDataKVar: KVar<PieChart.PieData>
+    ) {
+        div(fomantic.eight.wide.column) {
+            div(fomantic.ui.center.aligned.segment) {
+                PieChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+                label(fomantic.ui.horizontal.label).text(label)
             }
         }
+
     }
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {

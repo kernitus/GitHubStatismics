@@ -21,7 +21,8 @@ data class WatchedUser(
 
     // Graphs variables
     var languageBytesData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var cloneTrafficPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var forksCountPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var stargazersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
         show.value = true
@@ -42,8 +43,8 @@ data class WatchedUser(
         val repositoriesIterable = user.listRepositories().withPageSize(30).iterator()
         repositories.value = if (repositoriesIterable.hasNext()) repositoriesIterable.nextPage() else emptyList()
 
-        // Process data for graphs
-        val languageBytesMap: MutableMap<String, Long> = mutableMapOf() // language name, amount of bytes
+        // Language by amount of bytes
+        val languageBytesMap: MutableMap<String, Long> = mutableMapOf()
         var totalBytes = 0L
         repositories.value.forEach { repo ->
             val langMap: Map<String, Long> = repo.listLanguages() // Explicit type needed due to casting issues
@@ -55,13 +56,15 @@ data class WatchedUser(
         val languageData: MutableList<DataList> = mutableListOf(DataList.Numbers(languageBytesMap.values))
         languageBytesData.value = PieChart.PieData(languageBytesMap.keys, languageData)
 
-        val cloneTrafficPerRepo: MutableMap<String, Int> = mutableMapOf() // repo name, clone quantity
-        repositories.value.forEach { repo ->
-            val forksCount = repo.forksCount
-            if (forksCount > 0) cloneTrafficPerRepo[repo.name] = repo.forksCount
-        }
-        cloneTrafficPerRepoData.value =
-            PieChart.PieData(cloneTrafficPerRepo.keys, mutableListOf(DataList.Numbers(cloneTrafficPerRepo.values)))
+        pieDataFromProperty(forksCountPerRepoData, GHRepository::getForksCount)
+        pieDataFromProperty(stargazersPerRepoData, GHRepository::getStargazersCount)
     }
+
+    private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
+        val valueMap: MutableMap<String, Int> = mutableMapOf()
+        repositories.value.filter { property(it) > 0 }.forEach { valueMap[it.name] = property(it) }
+        dataKVar.value = PieChart.PieData(valueMap.keys, mutableListOf(DataList.Numbers(valueMap.values)))
+    }
+
 }
 
