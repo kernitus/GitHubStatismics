@@ -98,7 +98,16 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.lineChartsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            lineChartContainer("commitsPerRepo", "Amount of commits per week", watchedUser.commitsPerWeek)
+            lineChartContainer(
+                "commitsPerWeek",
+                "Amount of commits per week for all users for the past year",
+                watchedUser.commitsPerWeek
+            )
+            lineChartContainer(
+                "commitsPerWeekAggregate",
+                "Amount of commits per week for the past year",
+                watchedUser.commitsPerWeekAggregate
+            )
         }
     }
 

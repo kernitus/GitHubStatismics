@@ -107,9 +107,14 @@ class PieDataSet(
     val borderColor: List<String>? = borderColours?.map { it.toRgbString() }
 }
 
-class LineDataSet(val label: String? = null, dataList: DataList, backgroundColour: Color = randomColour()) : DataSet {
+class LineDataSet(
+    val label: String? = null,
+    dataList: DataList,
+    backgroundColour: Color? = randomColour(),
+    val order: Int? = null
+) : DataSet {
     override val data = dataList.list
-    val backgroundColor = backgroundColour.toRgbString()
+    val backgroundColor = backgroundColour?.toRgbString()
 }
 
 fun Color.toRgbString(): String = "rgb(${red}, ${green}, ${blue})"
