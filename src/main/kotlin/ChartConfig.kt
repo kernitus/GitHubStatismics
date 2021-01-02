@@ -78,7 +78,7 @@ private fun randomColour(): Color =
 
 private fun dataSetFromDataList(dataList: DataList): DataSet {
     val colours: Array<Color> = Array(dataList.list.size) { randomColour() }
-    return DataSet(dataList = dataList, backgroundColours = colours)
+    return PieDataSet(dataList = dataList, backgroundColours = colours)
 }
 
 data class ChartConfig(val type: ChartType, val data: ChartData?)
@@ -92,15 +92,24 @@ data class ChartData(
     val datasets: Collection<DataSet>
 )
 
-class DataSet(
+interface DataSet {
+    val data: Collection<Any>
+}
+
+class PieDataSet(
     val label: String? = null,
     dataList: DataList,
     backgroundColours: Array<Color>? = null,
     borderColours: Array<Color>? = null,
-) {
-    val data: Collection<Any> = dataList.list
+) : DataSet {
+    override val data = dataList.list
     val backgroundColor: List<String>? = backgroundColours?.map { it.toRgbString() }
     val borderColor: List<String>? = borderColours?.map { it.toRgbString() }
+}
+
+class LineDataSet(val label: String? = null, dataList: DataList, backgroundColour: Color = randomColour()) : DataSet {
+    override val data = dataList.list
+    val backgroundColor = backgroundColour.toRgbString()
 }
 
 fun Color.toRgbString(): String = "rgb(${red}, ${green}, ${blue})"

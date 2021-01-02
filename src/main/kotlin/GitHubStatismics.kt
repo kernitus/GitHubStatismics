@@ -58,9 +58,12 @@ class GitHubStatismics {
                         val statsTab = a(fomantic.item.active)
                         statsTab.setAttributeRaw("data-tab", "one")
                         statsTab.text("Stats")
-                        val graphsTab = a(fomantic.item)
-                        graphsTab.setAttributeRaw("data-tab", "two")
-                        graphsTab.text("Graphs")
+                        val pieChartsTab = a(fomantic.item)
+                        pieChartsTab.setAttributeRaw("data-tab", "two")
+                        pieChartsTab.text("Pie Charts")
+                        val lineChartsTab = a(fomantic.item)
+                        lineChartsTab.setAttributeRaw("data-tab", "three")
+                        lineChartsTab.text("Line Charts")
                     }
 
                     val statsTab = div(fomantic.ui.bottom.attached.tab.segment.active)
@@ -75,63 +78,27 @@ class GitHubStatismics {
                         }
                     }
 
-                    val graphsTab = div(fomantic.ui.bottom.attached.tab.segment)
-                    graphsTab.setAttributeRaw("data-tab", "two")
-                    graphsTab.new {
-                        graphsTab(watchedUser)
+                    val pieChartsTab = div(fomantic.ui.bottom.attached.tab.segment)
+                    pieChartsTab.setAttributeRaw("data-tab", "two")
+                    pieChartsTab.new {
+                        pieChartsTab(watchedUser)
+                    }
+                    val lineChartsTab = div(fomantic.ui.bottom.attached.tab.segment)
+                    lineChartsTab.setAttributeRaw("data-tab", "three")
+                    lineChartsTab.new {
+                        lineChartsTab(watchedUser)
                     }
 
                     // JavaScript needed to make the tabs interactive
-                    document.body.execute(
-                        """
-                        ${'$'}('.menu .item').tab();  
-                    """.trimIndent()
-                    )
-
+                    document.body.execute("${'$'}('.menu .item').tab();")
                 }
             }
         }
     }
 
-    private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
+    private fun ElementCreator<*>.lineChartsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            pieChartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
-            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
-            pieChartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
-            pieChartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
-            pieChartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
-            pieChartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
-            pieChartContainer(
-                "subscribersPerRepo",
-                "Amount of subscribers per repo",
-                watchedUser.subscribersPerRepoData
-            )
-
-            //TODO move graph to different page
-            lineChartContainer("commitsPerRepo", "Amount of commits every week", watchedUser.commitsPerWeek)
-
-            div(fomantic.eight.wide.column) {
-                div(fomantic.ui.center.aligned.segment) {
-                    ScatterChart(
-                        canvas(mapOf("id" to "diomaialobelobelo"), width = 400, height = 400),
-                        ChartData(
-                            datasets = listOf(
-                                DataSet(
-                                    label = "cringi cubici", dataList = DataList.Points(
-                                        listOf(
-                                            Point(12, 23),
-                                            Point(78, 3),
-                                            Point(812, 92),
-                                            Point(12, 2),
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                    label(fomantic.ui.horizontal.label).text("Amount of commits per week")
-                }
-            }
+            lineChartContainer("commitsPerRepo", "Amount of commits per week", watchedUser.commitsPerWeek)
         }
     }
 
@@ -148,8 +115,25 @@ class GitHubStatismics {
         }
     }
 
+    private fun ElementCreator<*>.pieChartsTab(watchedUser: WatchedUser) {
+        div(fomantic.ui.centered.grid) {
+            pieChartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
+            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
+            pieChartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
+            pieChartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
+            pieChartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
+            pieChartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
+            pieChartContainer(
+                "subscribersPerRepo",
+                "Amount of subscribers per repo",
+                watchedUser.subscribersPerRepoData
+            )
+        }
+    }
+
+
     private fun ElementCreator<*>.lineChartContainer(chartId: String, label: String, chartDataKVar: KVar<ChartData>) {
-        div(fomantic.eight.wide.column) {
+        div(fomantic.ten.wide.column) {
             div(fomantic.ui.center.aligned.segment) {
                 LineChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
                 label(fomantic.ui.horizontal.label).text(label)

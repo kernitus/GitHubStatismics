@@ -69,21 +69,15 @@ data class WatchedUser(
         // Line chart of commits per week
         repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
             commitsDataSets.add(
-                DataSet(
+                LineDataSet(
                     label = repo.name,
-                    dataList = DataList.Numbers(repo.statistics.participation.allCommits)
+                    dataList = DataList.Numbers(repo.statistics.participation.allCommits),
                 )
             )
-            println("${repo.name}: ${repo.statistics.participation.allCommits}")
         }
-
-        //TODO add labels to each dataset
         val commitsLabels: MutableList<String> = mutableListOf()
-        for (i in 1..53) {
-            commitsLabels.add("Week $i")
-        }
+        for (i in 1..53) commitsLabels.add("Week $i")
         commitsPerWeek.value = ChartData(labels = commitsLabels, datasets = commitsDataSets)
-
     }
 
     private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
