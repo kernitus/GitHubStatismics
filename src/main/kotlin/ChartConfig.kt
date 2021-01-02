@@ -76,7 +76,7 @@ class DataSet(
     borderColours: Array<Color>? = null,
     val type: ChartType? = null
 ) {
-    val data: Array<out Any> = dataList.list
+    val data: Collection<Any> = dataList.list
     val backgroundColor: List<String>? = backgroundColours?.map { it.toRgbString() }
     val borderColor: List<String>? = borderColours?.map { it.toRgbString() }
 }
@@ -86,9 +86,9 @@ fun Color.toRgbString(): String = "rgb(${red}, ${green}, ${blue})"
 data class Point(val x: Number, val y: Number)
 data class DatePoint(val x: Instant, val y: Number)
 
-sealed class DataList(val list: Array<out Any>) {
-    class Numbers(vararg numbers: Number) : DataList(numbers)
-    class Points(vararg points: Point) : DataList(points)
+sealed class DataList(val list: Collection<Any>) {
+    class Numbers(numbers: Collection<Number>) : DataList(numbers)
+    class Points(points: Collection<Point>) : DataList(points)
 }
 
 

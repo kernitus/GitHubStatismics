@@ -93,28 +93,26 @@ class GitHubStatismics {
     }
 
     private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
-        p().text("Cool graphs below!")
         div(fomantic.ui.centered.grid) {
             div(fomantic.eight.wide.column) {
-                languagesPieChart(watchedUser)
+                div(fomantic.ui.center.aligned.segment) {
+                    PieChart(
+                        canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400),
+                        watchedUser.languageBytesData
+                    )
+                    label(fomantic.ui.horizontal.label).text("Languages by amount of bytes")
+                }
             }
             div(fomantic.eight.wide.column) {
-                commitsPerRepoPieChart(watchedUser)
+                div(fomantic.ui.center.aligned.segment) {
+                    PieChart(
+                        canvas(mapOf("id" to "forksPerRepoPieChart"), width = 400, height = 400),
+                        watchedUser.cloneTrafficPerRepoData
+                    )
+                    label(fomantic.ui.horizontal.label).text("Amount of forks per repo")
+                }
             }
         }
-        // TODO filter commits by author and show bytes per language
-        // TODO filter commits by author and show amount of commits by repo
-        // TODO without forked repos
-    }
-
-    private fun ElementCreator<*>.languagesPieChart(watchedUser: WatchedUser) {
-        val canvas: CanvasElement = canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400)
-        val languagesPieChart = PieChart(canvas, watchedUser.languagesPieChartData)
-    }
-
-    private fun ElementCreator<*>.commitsPerRepoPieChart(watchedUser: WatchedUser) {
-        val canvas: CanvasElement = canvas(mapOf("id" to "commitsPerRepoPieChart"), width = 400, height = 400)
-        PieChart(canvas, watchedUser.commitsPerRepoPieChartData)
     }
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {

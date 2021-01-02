@@ -1,7 +1,6 @@
 package main.kotlin
 
 import kweb.state.KVar
-import org.kohsuke.github.GHCommit
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GHUser
 import java.net.URL
@@ -21,8 +20,8 @@ data class WatchedUser(
     var repositoriesCount: KVar<String> = KVar(""),
 
     // Graphs variables
-    var languagesPieChartData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var commitsPerRepoPieChartData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var languageBytesData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var cloneTrafficPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
         show.value = true
@@ -35,36 +34,34 @@ data class WatchedUser(
         followingCount.value = user.followingCount.toString()
         repositoriesCount.value = user.publicRepoCount.toString()
 
-        val followersIterable = user.listFollowers().withPageSize(50).iterator()
+        // Grab only the first 30 of each of these to save on API calls
+        val followersIterable = user.listFollowers().withPageSize(30).iterator()
         followers.value = if (followersIterable.hasNext()) followersIterable.nextPage() else emptyList()
-        val followsIterable = user.listFollows().withPageSize(50).iterator()
+        val followsIterable = user.listFollows().withPageSize(30).iterator()
         follows.value = if (followsIterable.hasNext()) followsIterable.nextPage() else emptyList()
-        val repositoriesIterable = user.listRepositories().withPageSize(50).iterator()
+        val repositoriesIterable = user.listRepositories().withPageSize(30).iterator()
         repositories.value = if (repositoriesIterable.hasNext()) repositoriesIterable.nextPage() else emptyList()
 
         // Process data for graphs
         val languageBytesMap: MutableMap<String, Long> = mutableMapOf() // language name, amount of bytes
-        val commitsPerRepo: MutableMap<GHRepository, Long> = mutableMapOf() // repo, # of commits
-
+        var totalBytes = 0L
         repositories.value.forEach { repo ->
-            repo.statistics.codeFrequency
-            val langMap: Map<String, Long> = repo.listLanguages()
+            val langMap: Map<String, Long> = repo.listLanguages() // Explicit type needed due to casting issues
             langMap.forEach { (lang, amount) ->
                 languageBytesMap[lang] = languageBytesMap[lang]?.plus(amount) ?: 0L
-            }
-
-            val commits: MutableList<GHCommit> = mutableListOf()
-            repo.listCommits().withPageSize(100).iterator().forEachRemaining { commits.add(it) }
-
-            commits.forEach { commit ->
-                println(commit.author.id)
-                if (commit.author.id == user.id) commitsPerRepo[repo] = commitsPerRepo[repo]?.inc() ?: 0L
+                totalBytes += amount
             }
         }
+        val languageData: MutableList<DataList> = mutableListOf(DataList.Numbers(languageBytesMap.values))
+        languageBytesData.value = PieChart.PieData(languageBytesMap.keys, languageData)
 
-        val languageDataList: DataList.Numbers = DataList.Numbers(*languageBytesMap.values.toTypedArray())
-        val languageData: MutableList<DataList> = mutableListOf(languageDataList)
-        languagesPieChartData.value = PieChart.PieData(languageBytesMap.keys, languageData)
+        val cloneTrafficPerRepo: MutableMap<String, Int> = mutableMapOf() // repo name, clone quantity
+        repositories.value.forEach { repo ->
+            val forksCount = repo.forksCount
+            if (forksCount > 0) cloneTrafficPerRepo[repo.name] = repo.forksCount
+        }
+        cloneTrafficPerRepoData.value =
+            PieChart.PieData(cloneTrafficPerRepo.keys, mutableListOf(DataList.Numbers(cloneTrafficPerRepo.values)))
     }
 }
 
