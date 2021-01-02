@@ -95,17 +95,47 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            chartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
-            chartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
-            chartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
-            chartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
-            chartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
-            chartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
-            chartContainer("subscribersPerRepo", "Amount of subscribers per repo", watchedUser.subscribersPerRepoData)
+            pieChartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
+            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
+            pieChartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
+            pieChartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
+            pieChartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
+            pieChartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
+            pieChartContainer(
+                "subscribersPerRepo",
+                "Amount of subscribers per repo",
+                watchedUser.subscribersPerRepoData
+            )
+
+            //TODO move graph to different page
+            lineChartContainer("commitsPerRepo", "Amount of commits every week", watchedUser.commitsPerWeek)
+
+            div(fomantic.eight.wide.column) {
+                div(fomantic.ui.center.aligned.segment) {
+                    ScatterChart(
+                        canvas(mapOf("id" to "diomaialobelobelo"), width = 400, height = 400),
+                        ChartData(
+                            datasets = listOf(
+                                DataSet(
+                                    label = "cringi cubici", dataList = DataList.Points(
+                                        listOf(
+                                            Point(12, 23),
+                                            Point(78, 3),
+                                            Point(812, 92),
+                                            Point(12, 2),
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    label(fomantic.ui.horizontal.label).text("Amount of commits per week")
+                }
+            }
         }
     }
 
-    private fun ElementCreator<*>.chartContainer(
+    private fun ElementCreator<*>.pieChartContainer(
         chartId: String,
         label: String,
         chartDataKVar: KVar<PieChart.PieData>
@@ -116,7 +146,28 @@ class GitHubStatismics {
                 label(fomantic.ui.horizontal.label).text(label)
             }
         }
+    }
 
+    private fun ElementCreator<*>.lineChartContainer(chartId: String, label: String, chartDataKVar: KVar<ChartData>) {
+        div(fomantic.eight.wide.column) {
+            div(fomantic.ui.center.aligned.segment) {
+                LineChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+                label(fomantic.ui.horizontal.label).text(label)
+            }
+        }
+    }
+
+    private fun ElementCreator<*>.scatterChartContainer(
+        chartId: String,
+        label: String,
+        chartDataKVar: KVar<ChartData>
+    ) {
+        div(fomantic.eight.wide.column) {
+            div(fomantic.ui.center.aligned.segment) {
+                ScatterChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
+                label(fomantic.ui.horizontal.label).text(label)
+            }
+        }
     }
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {

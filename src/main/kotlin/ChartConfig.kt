@@ -46,6 +46,29 @@ class PieChart(canvas: CanvasElement, data: ChartData? = null) :
 
 }
 
+class LineChart(canvas: CanvasElement, data: ChartData? = null) :
+    Chart(canvas, ChartConfig(ChartType.line, data)) {
+
+    constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
+        data.addListener { _, newData ->
+            setData(newData)
+            update()
+        }
+    }
+}
+
+class ScatterChart(canvas: CanvasElement, data: ChartData? = null) :
+    Chart(canvas, ChartConfig(ChartType.scatter, data)) {
+
+    constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
+        data.addListener { _, newData ->
+            setData(newData)
+            update()
+        }
+    }
+}
+
+
 private fun randomColour(): Color =
     Color(
         Random.nextInt(0, 255),
@@ -65,7 +88,7 @@ enum class ChartType {
 }
 
 data class ChartData(
-    val labels: Collection<String>,
+    val labels: Collection<String>? = null,
     val datasets: Collection<DataSet>
 )
 
@@ -74,7 +97,6 @@ class DataSet(
     dataList: DataList,
     backgroundColours: Array<Color>? = null,
     borderColours: Array<Color>? = null,
-    val type: ChartType? = null
 ) {
     val data: Collection<Any> = dataList.list
     val backgroundColor: List<String>? = backgroundColours?.map { it.toRgbString() }

@@ -27,6 +27,7 @@ data class WatchedUser(
     var openIssuesPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var watchersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var repoSizeData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var commitsPerWeek: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
         show.value = true
@@ -62,6 +63,27 @@ data class WatchedUser(
         pieDataFromProperty(subscribersPerRepoData, GHRepository::getSubscribersCount)
         pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
         pieDataFromProperty(repoSizeData, GHRepository::getSize)
+
+        val commitsDataSets: MutableList<DataSet> = mutableListOf()
+
+        // Line chart of commits per week
+        repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
+            commitsDataSets.add(
+                DataSet(
+                    label = repo.name,
+                    dataList = DataList.Numbers(repo.statistics.participation.allCommits)
+                )
+            )
+            println("${repo.name}: ${repo.statistics.participation.allCommits}")
+        }
+
+        //TODO add labels to each dataset
+        val commitsLabels: MutableList<String> = mutableListOf()
+        for (i in 1..53) {
+            commitsLabels.add("Week $i")
+        }
+        commitsPerWeek.value = ChartData(labels = commitsLabels, datasets = commitsDataSets)
+
     }
 
     private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
