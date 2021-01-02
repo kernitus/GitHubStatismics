@@ -96,8 +96,12 @@ class GitHubStatismics {
     private fun ElementCreator<*>.graphsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
             chartContainer("languageBytes", "Languages by amount of bytes", watchedUser.languageBytesData)
+            chartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData)
             chartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.forksCountPerRepoData)
             chartContainer("stargazerPerRepo", "Amount of stargazers per repo", watchedUser.stargazersPerRepoData)
+            chartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.watchersPerRepoData)
+            chartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.openIssuesPerRepoData)
+            chartContainer("subscribersPerRepo", "Amount of subscribers per repo", watchedUser.subscribersPerRepoData)
         }
     }
 

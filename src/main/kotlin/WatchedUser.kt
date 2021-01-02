@@ -23,6 +23,10 @@ data class WatchedUser(
     var languageBytesData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var forksCountPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var stargazersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var subscribersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var openIssuesPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var watchersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
+    var repoSizeData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
         show.value = true
@@ -35,29 +39,29 @@ data class WatchedUser(
         followingCount.value = user.followingCount.toString()
         repositoriesCount.value = user.publicRepoCount.toString()
 
-        // Grab only the first 30 of each of these to save on API calls
+        // Grab only the first few of each of these to save on API calls
         val followersIterable = user.listFollowers().withPageSize(30).iterator()
         followers.value = if (followersIterable.hasNext()) followersIterable.nextPage() else emptyList()
         val followsIterable = user.listFollows().withPageSize(30).iterator()
         follows.value = if (followsIterable.hasNext()) followsIterable.nextPage() else emptyList()
-        val repositoriesIterable = user.listRepositories().withPageSize(30).iterator()
+        val repositoriesIterable = user.listRepositories().withPageSize(50).iterator()
         repositories.value = if (repositoriesIterable.hasNext()) repositoriesIterable.nextPage() else emptyList()
 
         // Language by amount of bytes
         val languageBytesMap: MutableMap<String, Long> = mutableMapOf()
-        var totalBytes = 0L
         repositories.value.forEach { repo ->
             val langMap: Map<String, Long> = repo.listLanguages() // Explicit type needed due to casting issues
-            langMap.forEach { (lang, amount) ->
-                languageBytesMap[lang] = languageBytesMap[lang]?.plus(amount) ?: 0L
-                totalBytes += amount
-            }
+            langMap.forEach { (lang, amount) -> languageBytesMap[lang] = languageBytesMap[lang]?.plus(amount) ?: 0L }
         }
         val languageData: MutableList<DataList> = mutableListOf(DataList.Numbers(languageBytesMap.values))
         languageBytesData.value = PieChart.PieData(languageBytesMap.keys, languageData)
 
         pieDataFromProperty(forksCountPerRepoData, GHRepository::getForksCount)
         pieDataFromProperty(stargazersPerRepoData, GHRepository::getStargazersCount)
+        pieDataFromProperty(openIssuesPerRepoData, GHRepository::getOpenIssueCount)
+        pieDataFromProperty(subscribersPerRepoData, GHRepository::getSubscribersCount)
+        pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
+        pieDataFromProperty(repoSizeData, GHRepository::getSize)
     }
 
     private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
