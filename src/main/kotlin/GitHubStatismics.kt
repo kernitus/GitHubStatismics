@@ -8,9 +8,7 @@ import kweb.html.Document
 import kweb.plugins.chartJs.chartJs
 import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
-import kweb.state.KVar
 import org.kohsuke.github.GitHub
-import java.awt.Color
 
 fun main() {
     GitHubStatismics()
@@ -101,7 +99,7 @@ class GitHubStatismics {
                 languagesPieChart(watchedUser)
             }
             div(fomantic.eight.wide.column) {
-                languagesByAuthorChart(watchedUser)
+                commitsPerRepoPieChart(watchedUser)
             }
         }
         // TODO filter commits by author and show bytes per language
@@ -109,50 +107,14 @@ class GitHubStatismics {
         // TODO without forked repos
     }
 
-    private fun ElementCreator<*>.languagesByAuthorChart(watchedUser: WatchedUser) {
-        val repos = watchedUser.repositories
-        val dataList: KVar<DataList.Numbers> = KVar(DataList.Numbers(100, 400, 600))
-
-        val canvas = canvas(mapOf("id" to "languagesByAuthorPieChart"), width = 400, height = 400)
-        val languagesPieChart = Chart(
-            canvas, ChartConfig(
-                ChartType.pie,
-                ChartData(
-                    repos.value.toNamesList(),
-                    listOf(
-                        DataSet(
-                            dataList = dataList.value,
-                            backgroundColours = arrayOf(Color.RED, Color.BLUE, Color.YELLOW)
-                        ),
-                    )
-                )
-            )
-        )
-
-        repos.addListener { _, _ -> languagesPieChart.setPieData(repos.value.toLanguagesMap()) }
+    private fun ElementCreator<*>.languagesPieChart(watchedUser: WatchedUser) {
+        val canvas: CanvasElement = canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400)
+        val languagesPieChart = PieChart(canvas, watchedUser.languagesPieChartData)
     }
 
-    private fun ElementCreator<*>.languagesPieChart(watchedUser: WatchedUser) {
-        val repos = watchedUser.repositories
-        val dataList: KVar<DataList.Numbers> = KVar(DataList.Numbers(10, 20, 30))
-
-        val canvas = canvas(mapOf("id" to "languagesPieChart"), width = 400, height = 400)
-        val languagesPieChart = Chart(
-            canvas, ChartConfig(
-                ChartType.pie,
-                ChartData(
-                    repos.value.toNamesList(),
-                    listOf(
-                        DataSet(
-                            dataList = dataList.value,
-                            backgroundColours = arrayOf(Color.RED, Color.BLUE, Color.YELLOW)
-                        ),
-                    )
-                )
-            )
-        )
-
-        repos.addListener { _, _ -> languagesPieChart.setPieData(repos.value.toLanguagesMap()) }
+    private fun ElementCreator<*>.commitsPerRepoPieChart(watchedUser: WatchedUser) {
+        val canvas: CanvasElement = canvas(mapOf("id" to "commitsPerRepoPieChart"), width = 400, height = 400)
+        PieChart(canvas, watchedUser.commitsPerRepoPieChartData)
     }
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {
@@ -322,16 +284,18 @@ class GitHubStatismics {
     }
 
     private fun setWatchedUser(username: String, watchedUser: WatchedUser) {
-        watchedUser.followers.value = emptyList()
-        watchedUser.follows.value = emptyList()
-        watchedUser.repositories.value = emptyList()
+        GlobalScope.launch {
+            watchedUser.followers.value = emptyList()
+            watchedUser.follows.value = emptyList()
+            watchedUser.repositories.value = emptyList()
 
-        try {
-            val user = getUser(username)
-            watchedUser.setValuesFromGHUser(user)
-        } catch (e: Exception) {
-            sendToast("error", "User load error", "Something went wrong loading the user!", "white")
-            e.printStackTrace()
+            try {
+                val user = getUser(username)
+                watchedUser.setValuesFromGHUser(user)
+            } catch (e: Exception) {
+                sendToast("error", "User load error", "Something went wrong loading the user!", "white")
+                e.printStackTrace()
+            }
         }
     }
 

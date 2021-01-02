@@ -2,13 +2,14 @@ package main.kotlin
 
 import kweb.CanvasElement
 import kweb.plugins.chartJs.ChartJsPlugin
+import kweb.state.KVal
 import kweb.util.random
 import kweb.util.toJson
 import java.awt.Color
 import java.time.Instant
 import kotlin.random.Random
 
-class Chart(private val canvas: CanvasElement, chartConfig: ChartConfig) {
+abstract class Chart(private val canvas: CanvasElement, chartConfig: ChartConfig) {
     private val chartVarName = "c${random.nextInt(10000000)}"
 
     init {
@@ -16,21 +17,34 @@ class Chart(private val canvas: CanvasElement, chartConfig: ChartConfig) {
         canvas.execute("$chartVarName = new Chart(${canvas.jsExpression}.getContext('2d'), ${chartConfig.toJson()})")
     }
 
-    private fun update() = canvas.execute("$chartVarName.update()")
+    protected fun update() = canvas.execute("$chartVarName.update()")
 
-    fun setNewData(datasets: List<DataSet>) {
+    protected fun setDataSets(datasets: Collection<DataSet>) =
         canvas.execute("${chartVarName}.data.datasets = ${datasets.toJson()}")
-        update()
-    }
 
-    fun setPieData(map: Map<String, Number>) {
-        canvas.execute("${chartVarName}.data.labels = ${map.keys.toJson()}")
-        val dataSets: List<DataSet> = listOf(dataSetFromList(map.values.toTypedArray()))
-        setNewData(dataSets)
-    }
+    protected fun setLabels(labels: Collection<String>) =
+        canvas.execute("${chartVarName}.data.labels = ${labels.toJson()}")
+
+    protected fun setData(data: ChartData) =
+        canvas.execute("${chartVarName}.data = ${data.toJson()}")
+
 }
 
-data class ChartConfig(val type: ChartType, val data: ChartData)
+class PieChart(canvas: CanvasElement, data: ChartData? = null) :
+    Chart(canvas, ChartConfig(ChartType.pie, data)) {
+
+    constructor(canvas: CanvasElement, data: KVal<PieData>) : this(canvas, data.value.toChartData()) {
+        data.addListener { _, newData ->
+            setData(newData.toChartData())
+            update()
+        }
+    }
+
+    data class PieData(val labels: Collection<String>, val dataLists: Collection<DataList>) {
+        fun toChartData() = ChartData(labels, dataLists.map { dataSetFromDataList(it) })
+    }
+
+}
 
 private fun randomColour(): Color =
     Color(
@@ -39,18 +53,20 @@ private fun randomColour(): Color =
         Random.nextInt(0, 255)
     )
 
-private fun dataSetFromList(list: Array<out Number>): DataSet {
-    val colours: Array<Color> = Array(list.size) { randomColour() }
-    return DataSet(dataList = DataList.Numbers(*list), backgroundColours = colours)
+private fun dataSetFromDataList(dataList: DataList): DataSet {
+    val colours: Array<Color> = Array(dataList.list.size) { randomColour() }
+    return DataSet(dataList = dataList, backgroundColours = colours)
 }
+
+data class ChartConfig(val type: ChartType, val data: ChartData?)
 
 enum class ChartType {
     bar, line, pie, radar, polar, bubble, scatter, area
 }
 
 data class ChartData(
-    val labels: List<String>,
-    val datasets: List<DataSet>
+    val labels: Collection<String>,
+    val datasets: Collection<DataSet>
 )
 
 class DataSet(
