@@ -101,8 +101,9 @@ class BarChart(canvas: CanvasElement, dataKVal: KVal<BarChartData>?, data: Chart
     ) : ChartData
 
     class BarDataSet(
-        val label: String? = null, val backgroundColour: Color? = randomColour(), override val data: Collection<Any>
+        val label: String? = null, dataList: DataList, backgroundColour: Color? = randomColour(),
     ) : DataSet {
+        override val data = dataList.list
         val backgroundColor = backgroundColour?.toRgbString()
     }
 }
@@ -115,8 +116,8 @@ class StackedBarChart(canvas: CanvasElement, dataKVal: KVal<StackedBarChartData>
     ) : ChartData
 
     class StackedBarDataSet(
-        val label: String? = null, dataList: DataList, backgroundColour: Color? = randomColour(), val stack: String,
-        val order: Int? = null
+        val label: String? = null, dataList: DataList, backgroundColour: Color? = randomColour(),
+        val stack: String? = null
     ) : DataSet {
         override val data = dataList.list
         val backgroundColor = backgroundColour?.toRgbString()

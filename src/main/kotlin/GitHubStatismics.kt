@@ -10,6 +10,7 @@ import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import org.kohsuke.github.GitHub
+import java.io.FileNotFoundException
 
 fun main() {
     GitHubStatismics()
@@ -58,10 +59,10 @@ class GitHubStatismics {
                         statsTab.text("Stats")
                         val pieChartsTab = a(fomantic.item)
                         pieChartsTab.setAttributeRaw("data-tab", "two")
-                        pieChartsTab.text("Pie Charts")
+                        pieChartsTab.text("Totals Charts")
                         val lineChartsTab = a(fomantic.item)
                         lineChartsTab.setAttributeRaw("data-tab", "three")
-                        lineChartsTab.text("Line Charts")
+                        lineChartsTab.text("Time Graphs")
                     }
 
                     val statsTab = div(fomantic.ui.bottom.attached.tab.segment.active)
@@ -104,6 +105,9 @@ class GitHubStatismics {
 
     private fun barChart(chartDataKVar: KVar<BarChart.BarChartData>): (CanvasElement) -> Chart =
         { canvas -> BarChart(canvas, chartDataKVar) }
+
+    private fun stackedBarChart(chartDataKVar: KVar<StackedBarChart.StackedBarChartData>): (CanvasElement) -> Chart =
+        { canvas -> StackedBarChart(canvas, chartDataKVar) }
 
     private fun ElementCreator<*>.chartContainer(
         chartId: String, label: String, loading: KVar<Boolean>, chartFunc: (CanvasElement) -> Chart,
@@ -155,8 +159,8 @@ class GitHubStatismics {
             chartContainer("commitsPerWeekAggregate", "Amount of commits per week for the past year",
                 watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate), "ten"
             )
-            chartContainer("commitsPerWeekDay", "Total commits for each weekday", watchedUser.loading,
-                barChart(watchedUser.commitsPerWeekDay), "ten"
+            chartContainer("commitsPerWeekDay", "Total commits for each weekday for the past year", watchedUser.loading,
+                stackedBarChart(watchedUser.commitsPerWeekDay), "ten"
             )
         }
     }
@@ -353,8 +357,10 @@ class GitHubStatismics {
             try {
                 val user = getUser(username)
                 watchedUser.setValuesFromGHUser(user)
+            } catch (e: FileNotFoundException) {
+                sendToast("error", "User does not exist", "Make sure you entered the name correctly", "white")
             } catch (e: Exception) {
-                sendToast("error", "User load error", "Make sure the user exists and please try again", "white")
+                sendToast("error", "User load error", "Please retry soon in case API data not ready yet", "white")
                 e.printStackTrace()
             }
         }

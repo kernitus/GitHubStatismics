@@ -41,8 +41,8 @@ data class WatchedUser(
     var commitsPerWeekAggregate: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
 
     // Bar charts
-    var commitsPerWeekDay: KVar<BarChart.BarChartData> = KVar(BarChart.BarChartData(datasets = emptyList()
-    )
+    var commitsPerWeekDay: KVar<StackedBarChart.StackedBarChartData> = KVar(
+        StackedBarChart.StackedBarChartData(datasets = emptyList())
     ),
     //var stackedCommitsData: KVar<ChartData> = KVar(StackedBarChartData(datasets = emptyList())),
 ) {
@@ -127,20 +127,28 @@ data class WatchedUser(
             LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
         // Barchart of commits per weekday
-        val commitsWeekDays = MutableList<Long>(7) { 0 } // A slot for each day of the week
+        val commitsWeekDaysDataSets = mutableListOf<StackedBarChart.StackedBarDataSet>()
+
         repositories.value.forEach { repo ->
+            val commitsWeekDays = MutableList<Long>(7) { 0 } // A slot for each day of the week
+
             repo.statistics.commitActivity.toList().forEach { commitActivity ->
                 val daysList = commitActivity.days
                 // First day is actually Sunday, fix this abomination
                 commitsWeekDays[6] = commitsWeekDays[6] + daysList[0]
                 for (i in 1..6) commitsWeekDays[i - 1] = commitsWeekDays[i - 1] + daysList[i]
             }
+            if (commitsWeekDays.sum() > 0) { // Don't show repos with no activity
+                val stackedDataSet =
+                    StackedBarChart.StackedBarDataSet(label = repo.name, dataList = DataList.Numbers(commitsWeekDays)
+                    )
+                commitsWeekDaysDataSets.add(stackedDataSet)
+            }
         }
 
-
-        commitsPerWeekDay.value = BarChart.BarChartData(
+        commitsPerWeekDay.value = StackedBarChart.StackedBarChartData(
             labels = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
-            datasets = listOf(BarChart.BarDataSet(data = commitsWeekDays))
+            datasets = commitsWeekDaysDataSets
         )
 
         // Stacked charts
