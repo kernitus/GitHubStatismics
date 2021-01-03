@@ -5,7 +5,6 @@ import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GHUser
 import java.net.URL
 import java.time.Instant
-import java.time.Period
 
 data class WatchedUser(
     // Loading variables
@@ -99,16 +98,28 @@ data class WatchedUser(
 
         // Stacked bar chart of commits per week for all users
         val commitsDataSets: MutableList<StackedBarChart.StackedBarDataSet> = mutableListOf()
-        repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
-            commitsDataSets.add(StackedBarChart.StackedBarDataSet(
-                label = repo.name,
-                dataList = DataList.Numbers(repo.statistics.participation.allCommits),
-            )
-            )
+        val commitsWeeklyLabels = mutableListOf<String>()
+        repositories.value.forEach { repo ->
+            val datePoints = mutableListOf<DatePoint>()
+            var repoTotalCommits = 0
+            repo.statistics.commitActivity.toList().forEach { week ->
+                val totalCommits = week.total
+                val instant = Instant.ofEpochSecond(week.week)
+                val datePoint = DatePoint(instant, totalCommits)
+                datePoints.add(datePoint)
+                commitsWeeklyLabels.add(datePoint.t)
+                repoTotalCommits += totalCommits
+            }
+            if (repoTotalCommits > 0) {
+                commitsDataSets.add(
+                    StackedBarChart.StackedBarDataSet(label = repo.name, dataList = DataList.DatePoints(datePoints)
+                    )
+                )
+            }
         }
-        val commitsLabels: MutableList<String> = mutableListOf()
+        val commitsLabels = mutableListOf<String>()
         for (i in 1..53) commitsLabels.add("Week $i")
-        commitsPerWeek.value = StackedBarChart.StackedBarChartData(labels = commitsLabels, datasets = commitsDataSets)
+        commitsPerWeek.value = StackedBarChart.StackedBarChartData(datasets = commitsDataSets)
 
         // Line charts of commits per week, owner vs total
         val weeklyCommitsAll = MutableList(52) { 0 }
@@ -129,7 +140,7 @@ data class WatchedUser(
         commitsPerWeekAggregate.value =
             LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
-        // Barchart of commits per weekday
+        // Bar chart of commits per weekday
         val commitsWeekDaysDataSets = mutableListOf<StackedBarChart.StackedBarDataSet>()
 
         repositories.value.forEach { repo ->
@@ -153,52 +164,6 @@ data class WatchedUser(
             labels = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
             datasets = commitsWeekDaysDataSets
         )
-
-        // Stacked charts
-        val stackedDataSets = mutableListOf<StackedBarChart.StackedBarDataSet>()
-        stackedDataSets.add(StackedBarChart.StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
-            listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
-            )
-        ), stack = "wekjfhwie"
-        )
-        )
-        stackedDataSets.add(StackedBarChart.StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
-            listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
-            )
-        ), stack = "wqjfiuehu"
-        )
-        )
-        // For each repo, get commits per day
-        // Dataset for each repo, with stack = repo name
-        /*repositories.value.forEach { repo ->
-            val dayActivity: MutableList<DatePoint> = mutableListOf()
-            repo.statistics.commitActivity.toList().forEach { commitActivity ->
-                // TODO also tally these up for week bar chart
-                val weekStart = Instant.ofEpochSecond(commitActivity.week)
-                dayActivity.add(DatePoint(weekStart,commitActivity.total))
-            }
-            val stackedDataList = DataList.DatePoints(dayActivity)
-            val stackedDataSet = StackedBarDataSet(label = repo.name, dataList = stackedDataList, stack = repo.name)
-            stackedDataSets.add(stackedDataSet)
-        }
-repositories.value.forEach { repo ->
-    val dayActivity: MutableList<DatePoint> = mutableListOf()
-    repo.statistics.commitActivity.toList().forEach { commitActivity ->
-        // TODO also tally these up for week bar chart
-        val weekStart = Instant.ofEpochSecond(commitActivity.week)
-        val daysArray = commitActivity.days
-        daysArray.forEach { commitCount ->
-            val point = DatePoint(weekStart, commitCount)
-            dayActivity.add(point)
-            weekStart.plus(Period.ofDays(1))
-            println("Point (${point.x},${point.y})")
-        }
-    }
-    val stackedDataList = DataList.DatePoints(dayActivity)
-    val stackedDataSet = StackedBarDataSet(label = repo.name, dataList = stackedDataList, stack = repo.name)
-    stackedDataSets.add(stackedDataSet)
-}
- */
 
         loading.value = false // Finished loading
     }

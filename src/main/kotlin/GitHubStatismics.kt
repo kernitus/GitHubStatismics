@@ -106,8 +106,9 @@ class GitHubStatismics {
     private fun barChart(chartDataKVar: KVar<BarChart.BarChartData>): (CanvasElement) -> Chart =
         { canvas -> BarChart(canvas, chartDataKVar) }
 
-    private fun stackedBarChart(chartDataKVar: KVar<StackedBarChart.StackedBarChartData>): (CanvasElement) -> Chart =
-        { canvas -> StackedBarChart(canvas, chartDataKVar) }
+    private fun stackedBarChart(
+        chartDataKVar: KVar<StackedBarChart.StackedBarChartData>, xTimeAxis: Boolean = false, yTimeAxis: Boolean = false
+    ): (CanvasElement) -> Chart = { canvas -> StackedBarChart(canvas, chartDataKVar, null, xTimeAxis, yTimeAxis) }
 
     private fun ElementCreator<*>.chartContainer(
         chartId: String, label: String, loading: KVar<Boolean>, chartFunc: (CanvasElement) -> Chart,
@@ -154,7 +155,7 @@ class GitHubStatismics {
     private fun ElementCreator<*>.lineChartsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
             chartContainer("commitsPerWeek", "Amount of commits per week for all users for the past year",
-                watchedUser.loading, stackedBarChart(watchedUser.commitsPerWeek), "ten"
+                watchedUser.loading, stackedBarChart(watchedUser.commitsPerWeek, true), "ten"
             )
             chartContainer("commitsPerWeekAggregate", "Amount of commits per week for the past year",
                 watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate), "ten"

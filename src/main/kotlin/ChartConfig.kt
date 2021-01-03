@@ -108,8 +108,10 @@ class BarChart(canvas: CanvasElement, dataKVal: KVal<BarChartData>?, data: Chart
     }
 }
 
-class StackedBarChart(canvas: CanvasElement, dataKVal: KVal<StackedBarChartData>?, data: ChartData? = null) :
-    Chart(canvas, ChartConfig(ChartType.bar, data, StackedBarChartOptions()), dataKVal) {
+class StackedBarChart(
+    canvas: CanvasElement, dataKVal: KVal<StackedBarChartData>?, data: ChartData? = null, xTimeAxis: Boolean = false,
+    yTimeAxis: Boolean = false
+) : Chart(canvas, ChartConfig(ChartType.bar, data, StackedBarChartOptions(xTimeAxis, yTimeAxis)), dataKVal) {
 
     class StackedBarChartData(
         override val labels: Collection<String> = emptyList(), override val datasets: Collection<StackedBarDataSet>
@@ -123,8 +125,10 @@ class StackedBarChart(canvas: CanvasElement, dataKVal: KVal<StackedBarChartData>
         val backgroundColor = backgroundColour?.toRgbString()
     }
 
-    data class StackedBarChartOptions(
-        val scales: ChartScales = ChartScales(listOf(ChartAxesOptions(true)), listOf(ChartAxesOptions(true))
+    class StackedBarChartOptions(
+        xTimeAxis: Boolean, yTimeAxis: Boolean,
+        val scales: ChartScales = ChartScales(listOf(ChartAxesOptions(true, if (xTimeAxis) "time" else null)),
+            listOf(ChartAxesOptions(true, if (yTimeAxis) "time" else null))
         )
     ) : ChartOptions
 
@@ -169,7 +173,7 @@ interface DataSet {
 
 data class Point(val x: Number, val y: Number)
 class DatePoint(instant: Instant, val y: Number) {
-    val x = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.from(ZoneOffset.UTC)).format(instant)
+    val t = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.from(ZoneOffset.UTC)).format(instant)
 }
 
 sealed class DataList(val list: Collection<Any>) {
