@@ -37,10 +37,12 @@ data class WatchedUser(
     var repoSizeData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
 
     // Line graphs
-    var commitsPerWeek: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
     var commitsPerWeekAggregate: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
 
     // Bar charts
+    var commitsPerWeek: KVar<StackedBarChart.StackedBarChartData> = KVar(
+        StackedBarChart.StackedBarChartData(datasets = emptyList())
+    ),
     var commitsPerWeekDay: KVar<StackedBarChart.StackedBarChartData> = KVar(
         StackedBarChart.StackedBarChartData(datasets = emptyList())
     ),
@@ -94,11 +96,11 @@ data class WatchedUser(
         pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
         pieDataFromProperty(repoSizeData, GHRepository::getSize)
 
-        val commitsDataSets: MutableList<LineChart.LineDataSet> = mutableListOf()
 
-        // Line chart of commits per week for all users
+        // Stacked bar chart of commits per week for all users
+        val commitsDataSets: MutableList<StackedBarChart.StackedBarDataSet> = mutableListOf()
         repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
-            commitsDataSets.add(LineChart.LineDataSet(
+            commitsDataSets.add(StackedBarChart.StackedBarDataSet(
                 label = repo.name,
                 dataList = DataList.Numbers(repo.statistics.participation.allCommits),
             )
@@ -106,8 +108,9 @@ data class WatchedUser(
         }
         val commitsLabels: MutableList<String> = mutableListOf()
         for (i in 1..53) commitsLabels.add("Week $i")
-        commitsPerWeek.value = LineChart.LineChartData(labels = commitsLabels, datasets = commitsDataSets)
+        commitsPerWeek.value = StackedBarChart.StackedBarChartData(labels = commitsLabels, datasets = commitsDataSets)
 
+        // Line charts of commits per week, owner vs total
         val weeklyCommitsAll = MutableList(52) { 0 }
         val weeklyCommitsOwner = MutableList(52) { 0 }
         repositories.value.filter { it.owner.id == user.id }.forEach { repo ->
