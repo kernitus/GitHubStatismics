@@ -168,12 +168,6 @@ class GitHubStatismics {
                 watchedUser.openIssuesPerRepoData,
                 watchedUser.loading
             )
-            pieChartContainer(
-                "subscribersPerRepo",
-                "Amount of subscribers per repo",
-                watchedUser.subscribersPerRepoData,
-                watchedUser.loading
-            )
         }
     }
 

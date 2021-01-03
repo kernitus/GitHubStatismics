@@ -127,7 +127,7 @@ class ScatterDataSet(
     val backgroundColor = backgroundColour?.toRgbString()
 }
 
-fun Color.toRgbString(): String = "rgb(${red}, ${green}, ${blue})"
+fun Color.toRgbString(): String = "rgba(${red}, ${green}, ${blue}, 0.7)"
 
 data class Point(val x: Number, val y: Number)
 data class DatePoint(val x: Instant, val y: Number)

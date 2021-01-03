@@ -29,7 +29,6 @@ data class WatchedUser(
     var languageBytesData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var forksCountPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var stargazersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var subscribersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var openIssuesPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var watchersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var repoSizeData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
@@ -82,7 +81,6 @@ data class WatchedUser(
         pieDataFromProperty(forksCountPerRepoData, GHRepository::getForksCount)
         pieDataFromProperty(stargazersPerRepoData, GHRepository::getStargazersCount)
         pieDataFromProperty(openIssuesPerRepoData, GHRepository::getOpenIssueCount)
-        pieDataFromProperty(subscribersPerRepoData, GHRepository::getSubscribersCount)
         pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
         pieDataFromProperty(repoSizeData, GHRepository::getSize)
 
