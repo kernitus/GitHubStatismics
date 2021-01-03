@@ -4,8 +4,11 @@ import kweb.state.KVar
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GHUser
 import java.net.URL
+import java.time.Instant
+import java.time.Period
 
 data class WatchedUser(
+    // Loading variables
     val loading: KVar<Boolean> = KVar(false),
     val areImageBioLocationLoading: KVar<Boolean> = KVar(false),
     val isFollowsLoading: KVar<Boolean> = KVar(false),
@@ -25,16 +28,21 @@ data class WatchedUser(
     var followingCount: KVar<String> = KVar(""),
     var repositoriesCount: KVar<String> = KVar(""),
 
-    // Graphs variables
-    var languageBytesData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var forksCountPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var stargazersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var openIssuesPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var watchersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var repoSizeData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
-    var commitsPerWeek: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
-    var commitsSizeScatterData: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
-    var commitsPerWeekAggregate: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
+    // Pie charts
+    var languageBytesData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+    var forksCountPerRepoData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+    var stargazersPerRepoData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+    var openIssuesPerRepoData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+    var watchersPerRepoData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+    var repoSizeData: KVar<PieChart.PieChartData> = KVar(PieChart.PieChartData(emptyList(), emptyList())),
+
+    // Line graphs
+    var commitsPerWeek: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
+    var commitsPerWeekAggregate: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
+
+    // Bar charts
+    //var commitsPerWeekDay: KVar<ChartData> = KVar(BarChartData(datasets = emptyList())),
+    //var stackedCommitsData: KVar<ChartData> = KVar(StackedBarChartData(datasets = emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
         // Set to loading
@@ -76,7 +84,7 @@ data class WatchedUser(
             langMap.forEach { (lang, amount) -> languageBytesMap[lang] = languageBytesMap[lang]?.plus(amount) ?: 0L }
         }
         val languageData: MutableList<DataList> = mutableListOf(DataList.Numbers(languageBytesMap.values))
-        languageBytesData.value = PieChart.PieData(languageBytesMap.keys, languageData)
+        languageBytesData.value = PieChart.PieChartData(languageBytesMap.keys, languageData)
 
         pieDataFromProperty(forksCountPerRepoData, GHRepository::getForksCount)
         pieDataFromProperty(stargazersPerRepoData, GHRepository::getStargazersCount)
@@ -84,20 +92,19 @@ data class WatchedUser(
         pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
         pieDataFromProperty(repoSizeData, GHRepository::getSize)
 
-        val commitsDataSets: MutableList<DataSet> = mutableListOf()
+        val commitsDataSets: MutableList<LineDataSet> = mutableListOf()
 
         // Line chart of commits per week for all users
         repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
-            commitsDataSets.add(
-                LineDataSet(
-                    label = repo.name,
-                    dataList = DataList.Numbers(repo.statistics.participation.allCommits),
-                )
+            commitsDataSets.add(LineDataSet(
+                label = repo.name,
+                dataList = DataList.Numbers(repo.statistics.participation.allCommits),
+            )
             )
         }
         val commitsLabels: MutableList<String> = mutableListOf()
         for (i in 1..53) commitsLabels.add("Week $i")
-        commitsPerWeek.value = ChartData(labels = commitsLabels, datasets = commitsDataSets)
+        commitsPerWeek.value = LineChart.LineChartData(labels = commitsLabels, datasets = commitsDataSets)
 
         val weeklyCommitsAll = MutableList(52) { 0 }
         val weeklyCommitsOwner = MutableList(52) { 0 }
@@ -110,15 +117,12 @@ data class WatchedUser(
             }
         }
         val weeklyCommitsDataSets = listOf(
-            LineDataSet(
-                label = "Total",
-                dataList = DataList.Numbers(weeklyCommitsAll),
-                order = 0,
+            LineDataSet(label = "Total", dataList = DataList.Numbers(weeklyCommitsAll), order = 0,
                 backgroundColour = null
-            ),
-            LineDataSet(label = name.value, dataList = DataList.Numbers(weeklyCommitsOwner), order = 1)
+            ), LineDataSet(label = name.value, dataList = DataList.Numbers(weeklyCommitsOwner), order = 1)
         )
-        commitsPerWeekAggregate.value = ChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
+        commitsPerWeekAggregate.value =
+            LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
         // Scatter chart of number of commits over repo size
         /*
@@ -141,14 +145,58 @@ data class WatchedUser(
         )))
         */
 
-        // Done loading
-        loading.value = false
+        val stackedDataSets = mutableListOf<StackedBarDataSet>()
+        stackedDataSets.add(StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
+            listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
+            )
+        ), stack = "wekjfhwie"
+        )
+        )
+        stackedDataSets.add(StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
+            listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
+            )
+        ), stack = "wqjfiuehu"
+        )
+        )
+        // For each repo, get commits per day
+        // Dataset for each repo, with stack = repo name
+        /*repositories.value.forEach { repo ->
+            val dayActivity: MutableList<DatePoint> = mutableListOf()
+            repo.statistics.commitActivity.toList().forEach { commitActivity ->
+                // TODO also tally these up for week bar chart
+                val weekStart = Instant.ofEpochSecond(commitActivity.week)
+                dayActivity.add(DatePoint(weekStart,commitActivity.total))
+            }
+            val stackedDataList = DataList.DatePoints(dayActivity)
+            val stackedDataSet = StackedBarDataSet(label = repo.name, dataList = stackedDataList, stack = repo.name)
+            stackedDataSets.add(stackedDataSet)
+        }
+repositories.value.forEach { repo ->
+    val dayActivity: MutableList<DatePoint> = mutableListOf()
+    repo.statistics.commitActivity.toList().forEach { commitActivity ->
+        // TODO also tally these up for week bar chart
+        val weekStart = Instant.ofEpochSecond(commitActivity.week)
+        val daysArray = commitActivity.days
+        daysArray.forEach { commitCount ->
+            val point = DatePoint(weekStart, commitCount)
+            dayActivity.add(point)
+            weekStart.plus(Period.ofDays(1))
+            println("Point (${point.x},${point.y})")
+        }
+    }
+    val stackedDataList = DataList.DatePoints(dayActivity)
+    val stackedDataSet = StackedBarDataSet(label = repo.name, dataList = stackedDataList, stack = repo.name)
+    stackedDataSets.add(stackedDataSet)
+}
+ */
+
+        loading.value = false // Finished loading
     }
 
-    private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieData>, property: (GHRepository) -> Int) {
+    private fun pieDataFromProperty(dataKVar: KVar<PieChart.PieChartData>, property: (GHRepository) -> Int) {
         val valueMap: MutableMap<String, Int> = mutableMapOf()
         repositories.value.filter { property(it) > 0 }.forEach { valueMap[it.name] = property(it) }
-        dataKVar.value = PieChart.PieData(valueMap.keys, mutableListOf(DataList.Numbers(valueMap.values)))
+        dataKVar.value = PieChart.PieChartData(valueMap.keys, mutableListOf(DataList.Numbers(valueMap.values)))
     }
 }
 

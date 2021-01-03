@@ -10,6 +10,7 @@ import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import org.kohsuke.github.GitHub
+import org.kohsuke.github.HttpException
 
 fun main() {
     GitHubStatismics()
@@ -37,14 +38,12 @@ class GitHubStatismics {
             div(fomantic.column) {
                 div(fomantic.ui.vertical.segment) {
                     div(fomantic.ui.message) {
-                        p().innerHTML(
-                            """
+                        p().innerHTML("""
                             A simple GitHub statistics visualiser. Enter a username or repository below to view some statistics.
                             <p>
                             Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
                             An OAuth Personal Access Token with no additional scopes is recommended.
-                            """
-                                .trimIndent()
+                            """.trimIndent()
                         )
                     }
                 }
@@ -96,35 +95,25 @@ class GitHubStatismics {
         }
     }
 
-    private fun ElementCreator<*>.lineChartsTab(watchedUser: WatchedUser) {
-        div(fomantic.ui.centered.grid) {
-            lineChartContainer(
-                "commitsPerWeek",
-                "Amount of commits per week for all users for the past year",
-                watchedUser.commitsPerWeek,
-                watchedUser.loading
-            )
-            lineChartContainer(
-                "commitsPerWeekAggregate",
-                "Amount of commits per week for the past year",
-                watchedUser.commitsPerWeekAggregate,
-                watchedUser.loading
-            )
-            //scatterChartContainer("commitsSize", "Number of commits during past year over repo size", watchedUser.commitsSizeScatterData, watchedUser.loading)
-        }
-    }
 
-    private fun ElementCreator<*>.pieChartContainer(
-        chartId: String,
-        label: String,
-        chartDataKVar: KVar<PieChart.PieData>,
-        loading: KVar<Boolean>
+    //////////////////////// CHARTS  //////////////////////////////////////////////
+    private fun pieChart(chartDataKVar: KVar<PieChart.PieChartData>): (CanvasElement) -> Chart =
+        { canvas -> PieChart(canvas, chartDataKVar) }
+
+    private fun lineChart(chartDataKVar: KVar<LineChart.LineChartData>): (CanvasElement) -> Chart =
+        { canvas -> LineChart(canvas, chartDataKVar) }
+
+    private fun ElementCreator<*>.chartContainer(
+        chartId: String, label: String, loading: KVar<Boolean>, chartFunc: (CanvasElement) -> Chart,
+        sizeClass: String = "eight"
     ) {
-        div(fomantic.eight.wide.column) {
+        val column = div(fomantic)
+        column.addClasses(sizeClass, "wide", "column")
+        column.new {
             val segment = div(fomantic.ui.disabled.center.aligned.segment)
             segment.new {
-                val chart = PieChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
                 label(fomantic.ui.horizontal.label).text(label)
+                val chart = chartFunc(canvas(mapOf("id" to chartId), 400, 400))
                 chart.loading.addListener { _, isLoading ->
                     segment.removeClasses("disabled")
                     if (isLoading) segment.addClasses("loading")
@@ -137,82 +126,37 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.pieChartsTab(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.grid) {
-            pieChartContainer(
-                "languageBytes",
-                "Languages by amount of bytes",
-                watchedUser.languageBytesData,
-                watchedUser.loading
+            chartContainer("languageBytes", "Languages by amount of bytes", watchedUser.loading,
+                pieChart(watchedUser.languageBytesData)
             )
-            pieChartContainer("sizePerRepo", "Size per repo", watchedUser.repoSizeData, watchedUser.loading)
-            pieChartContainer(
-                "forksPerRepo",
-                "Amount of forks per repo",
-                watchedUser.forksCountPerRepoData,
-                watchedUser.loading
+            chartContainer("sizePerRepo", "Size per repo", watchedUser.loading, pieChart(watchedUser.repoSizeData))
+            chartContainer("forksPerRepo", "Amount of forks per repo", watchedUser.loading,
+                pieChart(watchedUser.forksCountPerRepoData)
             )
-            pieChartContainer(
-                "stargazerPerRepo",
-                "Amount of stargazers per repo",
-                watchedUser.stargazersPerRepoData,
-                watchedUser.loading
+            chartContainer("stargazersRepo", "Amount of stargazers per repo", watchedUser.loading,
+                pieChart(watchedUser.stargazersPerRepoData)
             )
-            pieChartContainer(
-                "watchersPerRepo",
-                "Amount of watchers per repo",
-                watchedUser.watchersPerRepoData,
-                watchedUser.loading
+            chartContainer("watchersPerRepo", "Amount of watchers per repo", watchedUser.loading,
+                pieChart(watchedUser.watchersPerRepoData)
             )
-            pieChartContainer(
-                "openIssuesPerRepo",
-                "Amount of open issues per repo",
-                watchedUser.openIssuesPerRepoData,
-                watchedUser.loading
+            chartContainer("openIssuesPerRepo", "Amount of open issues per repo", watchedUser.loading,
+                pieChart(watchedUser.openIssuesPerRepoData)
             )
         }
     }
 
-
-    private fun ElementCreator<*>.lineChartContainer(
-        chartId: String,
-        label: String,
-        chartDataKVar: KVar<ChartData>,
-        loading: KVar<Boolean>
-    ) {
-        div(fomantic.ten.wide.column) {
-            val segment = div(fomantic.ui.center.aligned.segment)
-            segment.new {
-                val chart = LineChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
-                label(fomantic.ui.horizontal.label).text(label)
-                chart.loading.addListener { _, isLoading ->
-                    segment.removeClasses("disabled")
-                    if (isLoading) segment.addClasses("loading")
-                    else segment.removeClasses("loading")
-                }
-                loading.addListener { _, isLoading -> chart.loading.value = isLoading }
-            }
+    private fun ElementCreator<*>.lineChartsTab(watchedUser: WatchedUser) {
+        div(fomantic.ui.centered.grid) {
+            chartContainer("commitsPerWeek", "Amount of commits per week for all users for the past year",
+                watchedUser.loading, lineChart(watchedUser.commitsPerWeek), "ten"
+            )
+            chartContainer("commitsPerWeekAggregate", "Amount of commits per week for the past year",
+                watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate), "ten"
+            )
         }
     }
 
-    private fun ElementCreator<*>.scatterChartContainer(
-        chartId: String,
-        label: String,
-        chartDataKVar: KVar<ChartData>,
-        loading: KVar<Boolean>
-    ) {
-        div(fomantic.eight.wide.column) {
-            val segment = div(fomantic.ui.center.aligned.segment)
-            segment.new {
-                val chart = ScatterChart(canvas(mapOf("id" to chartId), width = 400, height = 400), chartDataKVar)
-                label(fomantic.ui.horizontal.label).text(label)
-                chart.loading.addListener { _, isLoading ->
-                    segment.removeClasses("disabled")
-                    if (isLoading) segment.addClasses("loading")
-                    else segment.removeClasses("loading")
-                }
-                loading.addListener { _, isLoading -> chart.loading.value = isLoading }
-            }
-        }
-    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.action.input) {
@@ -401,11 +345,14 @@ class GitHubStatismics {
 
     private fun setWatchedUser(username: String, watchedUser: WatchedUser) {
         GlobalScope.launch {
-
             try {
                 val user = getUser(username)
                 watchedUser.setValuesFromGHUser(user)
+            } catch (e: HttpException) {
+                sendToast("error", "Http Exception", "Something went wrong loading the user!", "white")
+                e.printStackTrace()
             } catch (e: Exception) {
+                //TODO 404 is FileNotFoundException, IOException throws an HttpException
                 sendToast("error", "User load error", "Something went wrong loading the user!", "white")
                 e.printStackTrace()
             }
