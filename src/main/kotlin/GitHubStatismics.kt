@@ -36,15 +36,9 @@ class GitHubStatismics {
     private fun ElementCreator<*>.pageBorderAndTitle() {
         div(fomantic.ui.main.container) {
             div(fomantic.column) {
-                div(fomantic.ui.vertical.segment) {
-                    div(fomantic.ui.message) {
-                        p().innerHTML("""
-                            A simple GitHub statistics visualiser. Enter a username or repository below to view some statistics.
-                            <p>
-                            Authentication via a property file ~/.github is necessary. Please see <a href=https://github-api.kohsuke.org/index.html> here </a> for more details.
-                            An OAuth Personal Access Token with no additional scopes is recommended.
-                            """.trimIndent()
-                        )
+                div(fomantic.ui.center.aligned.vertical.segment) {
+                    div(fomantic.ui.green.message.compact) {
+                        h1().text("GitHub Statismics: A simple GitHub statistics visualiser")
                     }
                 }
 
