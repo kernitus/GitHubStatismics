@@ -98,7 +98,8 @@ data class WatchedUser(
 
         // Stacked bar chart of commits per week for all users
         val commitsDataSets: MutableList<StackedBarChart.StackedBarDataSet> = mutableListOf()
-        val commitsWeeklyLabels = mutableListOf<String>()
+        val weekInstants = mutableListOf<Instant>()
+        var completedWeekInstants = false
         repositories.value.forEach { repo ->
             val datePoints = mutableListOf<DatePoint>()
             var repoTotalCommits = 0
@@ -107,8 +108,8 @@ data class WatchedUser(
                 val instant = Instant.ofEpochSecond(week.week)
                 val datePoint = DatePoint(instant, totalCommits)
                 datePoints.add(datePoint)
-                commitsWeeklyLabels.add(datePoint.t)
                 repoTotalCommits += totalCommits
+                if (!completedWeekInstants) weekInstants.add(instant)
             }
             if (repoTotalCommits > 0) {
                 commitsDataSets.add(
@@ -116,15 +117,14 @@ data class WatchedUser(
                     )
                 )
             }
+            completedWeekInstants = true
         }
-        val commitsLabels = mutableListOf<String>()
-        for (i in 1..53) commitsLabels.add("Week $i")
         commitsPerWeek.value = StackedBarChart.StackedBarChartData(datasets = commitsDataSets)
 
         // Line charts of commits per week, owner vs total
         val weeklyCommitsAll = MutableList(52) { 0 }
         val weeklyCommitsOwner = MutableList(52) { 0 }
-        repositories.value.filter { it.owner.id == user.id }.forEach { repo ->
+        repositories.value.forEach { repo ->
             val commitsAll = repo.statistics.participation.allCommits
             val commitsOwner = repo.statistics.participation.ownerCommits
             for (i in commitsAll.indices) {
@@ -132,13 +132,21 @@ data class WatchedUser(
                 weeklyCommitsOwner[i] += commitsOwner[i]
             }
         }
+
+        val commitsTotalDatePoints = mutableListOf<DatePoint>()
+        val commitsOwnerDatePoints = mutableListOf<DatePoint>()
+        for (i in weeklyCommitsAll.indices) {
+            commitsTotalDatePoints.add(DatePoint(weekInstants[i], weeklyCommitsAll[i]))
+            commitsOwnerDatePoints.add(DatePoint(weekInstants[i], weeklyCommitsOwner[i]))
+        }
+
         val weeklyCommitsDataSets = listOf(
-            LineChart.LineDataSet(label = "Total", dataList = DataList.Numbers(weeklyCommitsAll), order = 0,
+            LineChart.LineDataSet(label = "Total", dataList = DataList.DatePoints(commitsTotalDatePoints), order = 0,
                 backgroundColour = null
-            ), LineChart.LineDataSet(label = name.value, dataList = DataList.Numbers(weeklyCommitsOwner), order = 1)
+            ),
+            LineChart.LineDataSet(label = name.value, dataList = DataList.DatePoints(commitsOwnerDatePoints), order = 1)
         )
-        commitsPerWeekAggregate.value =
-            LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
+        commitsPerWeekAggregate.value = LineChart.LineChartData(datasets = weeklyCommitsDataSets)
 
         // Bar chart of commits per weekday
         val commitsWeekDaysDataSets = mutableListOf<StackedBarChart.StackedBarDataSet>()

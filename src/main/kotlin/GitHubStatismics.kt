@@ -100,8 +100,9 @@ class GitHubStatismics {
     private fun pieChart(chartDataKVar: KVar<PieChart.PieChartData>): (CanvasElement) -> Chart =
         { canvas -> PieChart(canvas, chartDataKVar) }
 
-    private fun lineChart(chartDataKVar: KVar<LineChart.LineChartData>): (CanvasElement) -> Chart =
-        { canvas -> LineChart(canvas, chartDataKVar) }
+    private fun lineChart(
+        chartDataKVar: KVar<LineChart.LineChartData>, xTimeAxis: Boolean = false, yTimeAxis: Boolean = false
+    ): (CanvasElement) -> Chart = { canvas -> LineChart(canvas, chartDataKVar, null, xTimeAxis, yTimeAxis) }
 
     private fun barChart(chartDataKVar: KVar<BarChart.BarChartData>): (CanvasElement) -> Chart =
         { canvas -> BarChart(canvas, chartDataKVar) }
@@ -158,7 +159,7 @@ class GitHubStatismics {
                 watchedUser.loading, stackedBarChart(watchedUser.commitsPerWeek, true), "ten"
             )
             chartContainer("commitsPerWeekAggregate", "Amount of commits per week for the past year",
-                watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate), "ten"
+                watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate, true), "ten"
             )
             chartContainer("commitsPerWeekDay", "Total commits for each weekday for the past year", watchedUser.loading,
                 stackedBarChart(watchedUser.commitsPerWeekDay), "ten"
@@ -361,15 +362,19 @@ class GitHubStatismics {
             } catch (e: FileNotFoundException) {
                 sendToast("error", "User does not exist", "Make sure you entered the name correctly", "white")
             } catch (e: Exception) {
-                sendToast("error", "User load error", "Please retry soon in case API data not ready yet", "white")
+                sendToast("error", "User load error", "Please retry soon, in case API data not ready yet", "white",
+                    10000
+                )
                 e.printStackTrace()
             }
         }
     }
 
-    private fun sendToast(className: String, title: String, message: String, progressColour: String) {
+    private fun sendToast(
+        className: String, title: String, message: String, progressColour: String, displayTime: Int = 5000
+    ) {
         document.body.execute(
-            "$('body').toast({showProgress: 'bottom', classProgress: 'i$progressColour', message: '$message', class: '$className', title: '$title'});"
+            "$('body').toast({displayTime: $displayTime, showProgress: 'bottom', classProgress: '$progressColour', message: '$message', class: '$className', title: '$title'});"
         )
     }
 }

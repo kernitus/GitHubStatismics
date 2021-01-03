@@ -66,8 +66,10 @@ class PieChart(canvas: CanvasElement, dataKVal: KVal<PieChartData>? = null, data
     }
 }
 
-class LineChart(canvas: CanvasElement, dataKVal: KVal<LineChartData>? = null, data: ChartData? = null) :
-    Chart(canvas, ChartConfig(ChartType.line, data), dataKVal) {
+class LineChart(
+    canvas: CanvasElement, dataKVal: KVal<LineChartData>? = null, data: ChartData? = null, xTimeAxis: Boolean = false,
+    yTimeAxis: Boolean = false
+) : Chart(canvas, ChartConfig(ChartType.line, data, LineChartOptions(xTimeAxis, yTimeAxis)), dataKVal) {
 
     class LineChartData(
         override val labels: Collection<String>? = null, override val datasets: Collection<LineDataSet>
@@ -79,6 +81,13 @@ class LineChart(canvas: CanvasElement, dataKVal: KVal<LineChartData>? = null, da
         override val data = dataList.list
         val backgroundColor = backgroundColour?.toRgbString()
     }
+
+    class LineChartOptions(
+        xTimeAxis: Boolean, yTimeAxis: Boolean,
+        val scales: ChartScales = ChartScales(listOf(ChartAxesOptions(type = if (xTimeAxis) "time" else null)),
+            listOf(ChartAxesOptions(type = if (yTimeAxis) "time" else null))
+        )
+    ) : ChartOptions
 }
 
 class ScatterChart(canvas: CanvasElement, data: ChartData? = null) :
@@ -132,16 +141,6 @@ class StackedBarChart(
         )
     ) : ChartOptions
 
-}
-
-class StackedTimeBarChart(canvas: CanvasElement, data: ChartData? = null) :
-    Chart(canvas, ChartConfig(ChartType.bar, data, StackedTimeBarChartOptions())) {
-
-    data class StackedTimeBarChartOptions(
-        val scales: ChartScales = ChartScales(listOf(ChartAxesOptions(true, "time", time = ChartAxisTime("day"))),
-            listOf(ChartAxesOptions(true))
-        )
-    ) : ChartOptions
 }
 
 ////////////////////////// ChartOptions ////////////////////////////////////
