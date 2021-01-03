@@ -94,11 +94,11 @@ data class WatchedUser(
         pieDataFromProperty(watchersPerRepoData, GHRepository::getWatchersCount)
         pieDataFromProperty(repoSizeData, GHRepository::getSize)
 
-        val commitsDataSets: MutableList<LineDataSet> = mutableListOf()
+        val commitsDataSets: MutableList<LineChart.LineDataSet> = mutableListOf()
 
         // Line chart of commits per week for all users
         repositories.value.filter { it.statistics.participation.allCommits.any { it > 0 } }.forEach { repo ->
-            commitsDataSets.add(LineDataSet(
+            commitsDataSets.add(LineChart.LineDataSet(
                 label = repo.name,
                 dataList = DataList.Numbers(repo.statistics.participation.allCommits),
             )
@@ -119,9 +119,9 @@ data class WatchedUser(
             }
         }
         val weeklyCommitsDataSets = listOf(
-            LineDataSet(label = "Total", dataList = DataList.Numbers(weeklyCommitsAll), order = 0,
+            LineChart.LineDataSet(label = "Total", dataList = DataList.Numbers(weeklyCommitsAll), order = 0,
                 backgroundColour = null
-            ), LineDataSet(label = name.value, dataList = DataList.Numbers(weeklyCommitsOwner), order = 1)
+            ), LineChart.LineDataSet(label = name.value, dataList = DataList.Numbers(weeklyCommitsOwner), order = 1)
         )
         commitsPerWeekAggregate.value =
             LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
@@ -140,18 +140,18 @@ data class WatchedUser(
 
         commitsPerWeekDay.value = BarChart.BarChartData(
             labels = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
-            datasets = listOf(BarDataSet(data = commitsWeekDays))
+            datasets = listOf(BarChart.BarDataSet(data = commitsWeekDays))
         )
 
         // Stacked charts
-        val stackedDataSets = mutableListOf<StackedBarDataSet>()
-        stackedDataSets.add(StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
+        val stackedDataSets = mutableListOf<StackedBarChart.StackedBarDataSet>()
+        stackedDataSets.add(StackedBarChart.StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
             listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
             )
         ), stack = "wekjfhwie"
         )
         )
-        stackedDataSets.add(StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
+        stackedDataSets.add(StackedBarChart.StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
             listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
             )
         ), stack = "wqjfiuehu"
