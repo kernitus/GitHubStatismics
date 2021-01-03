@@ -10,7 +10,6 @@ import kweb.plugins.fomanticUI.fomantic
 import kweb.plugins.fomanticUI.fomanticUIPlugin
 import kweb.state.KVar
 import org.kohsuke.github.GitHub
-import org.kohsuke.github.HttpException
 
 fun main() {
     GitHubStatismics()
@@ -103,6 +102,9 @@ class GitHubStatismics {
     private fun lineChart(chartDataKVar: KVar<LineChart.LineChartData>): (CanvasElement) -> Chart =
         { canvas -> LineChart(canvas, chartDataKVar) }
 
+    private fun barChart(chartDataKVar: KVar<BarChart.BarChartData>): (CanvasElement) -> Chart =
+        { canvas -> BarChart(canvas, chartDataKVar) }
+
     private fun ElementCreator<*>.chartContainer(
         chartId: String, label: String, loading: KVar<Boolean>, chartFunc: (CanvasElement) -> Chart,
         sizeClass: String = "eight"
@@ -152,6 +154,9 @@ class GitHubStatismics {
             )
             chartContainer("commitsPerWeekAggregate", "Amount of commits per week for the past year",
                 watchedUser.loading, lineChart(watchedUser.commitsPerWeekAggregate), "ten"
+            )
+            chartContainer("commitsPerWeekDay", "Total commits for each weekday", watchedUser.loading,
+                barChart(watchedUser.commitsPerWeekDay), "ten"
             )
         }
     }
@@ -348,12 +353,8 @@ class GitHubStatismics {
             try {
                 val user = getUser(username)
                 watchedUser.setValuesFromGHUser(user)
-            } catch (e: HttpException) {
-                sendToast("error", "Http Exception", "Something went wrong loading the user!", "white")
-                e.printStackTrace()
             } catch (e: Exception) {
-                //TODO 404 is FileNotFoundException, IOException throws an HttpException
-                sendToast("error", "User load error", "Something went wrong loading the user!", "white")
+                sendToast("error", "User load error", "Make sure the user exists and please try again", "white")
                 e.printStackTrace()
             }
         }

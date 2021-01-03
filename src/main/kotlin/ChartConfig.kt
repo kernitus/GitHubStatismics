@@ -42,12 +42,10 @@ class PieChart(canvas: CanvasElement, dataKVal: KVal<PieChartData>? = null, data
     Chart(canvas, ChartConfig(ChartType.pie, data), dataKVal) {
 
     class PieChartData(
-        override val labels: Collection<String>,
-        dataLists: Collection<DataList>,
+        override val labels: Collection<String>, dataLists: Collection<DataList>,
     ) : ChartData {
         override val datasets: Collection<DataSet> = dataLists.map { dataSetFromDataList(it) }
     }
-
 }
 
 class LineChart(canvas: CanvasElement, dataKVal: KVal<LineChartData>? = null, data: ChartData? = null) :
@@ -63,8 +61,11 @@ class ScatterChart(canvas: CanvasElement, data: ChartData? = null) :
 
 }
 
-class BarChart(canvas: CanvasElement, data: ChartData? = null) : Chart(canvas, ChartConfig(ChartType.bar, data)) {
-
+class BarChart(canvas: CanvasElement, dataKVal: KVal<BarChartData>?, data: ChartData? = null) :
+    Chart(canvas, ChartConfig(ChartType.bar, data), dataKVal) {
+    class BarChartData(
+        override val labels: Collection<String> = emptyList(), override val datasets: Collection<BarDataSet>
+    ) : ChartData
 }
 
 class StackedBarChart(canvas: CanvasElement, data: ChartData? = null) :
@@ -136,6 +137,12 @@ class ScatterDataSet(
     val order: Int? = null
 ) : DataSet {
     override val data = dataList.list
+    val backgroundColor = backgroundColour?.toRgbString()
+}
+
+class BarDataSet(
+    val label: String? = null, val backgroundColour: Color? = randomColour(), override val data: Collection<Any>
+) : DataSet {
     val backgroundColor = backgroundColour?.toRgbString()
 }
 

@@ -41,7 +41,9 @@ data class WatchedUser(
     var commitsPerWeekAggregate: KVar<LineChart.LineChartData> = KVar(LineChart.LineChartData(datasets = emptyList())),
 
     // Bar charts
-    //var commitsPerWeekDay: KVar<ChartData> = KVar(BarChartData(datasets = emptyList())),
+    var commitsPerWeekDay: KVar<BarChart.BarChartData> = KVar(BarChart.BarChartData(datasets = emptyList()
+    )
+    ),
     //var stackedCommitsData: KVar<ChartData> = KVar(StackedBarChartData(datasets = emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
@@ -124,27 +126,24 @@ data class WatchedUser(
         commitsPerWeekAggregate.value =
             LineChart.LineChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
-        // Scatter chart of number of commits over repo size
-        /*
-        val scatterDataPoints = mutableListOf<Point>()
+        // Barchart of commits per weekday
+        val commitsWeekDays = MutableList<Long>(7) { 0 } // A slot for each day of the week
         repositories.value.forEach { repo ->
-            val commitAmount = repo.statistics.participation.allCommits.sum()
-            var additions = 0L
-            var deletions = 0L
-            repo.statistics.codeFrequency.forEach { freq ->
-                additions += freq.additions
-                deletions += freq.deletions
+            repo.statistics.commitActivity.toList().forEach { commitActivity ->
+                val daysList = commitActivity.days
+                // First day is actually Sunday, fix this abomination
+                commitsWeekDays[6] = commitsWeekDays[6] + daysList[0]
+                for (i in 1..6) commitsWeekDays[i - 1] = commitsWeekDays[i - 1] + daysList[i]
             }
-            val size = deletions - additions
-            scatterDataPoints.add(Point(size,commitAmount))
         }
-        commitsSizeScatterData.value = ChartData(datasets = listOf(
-        ScatterDataSet(
-            label = "repi",
-            dataList = DataList.Points(scatterDataPoints)
-        )))
-        */
 
+
+        commitsPerWeekDay.value = BarChart.BarChartData(
+            labels = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+            datasets = listOf(BarDataSet(data = commitsWeekDays))
+        )
+
+        // Stacked charts
         val stackedDataSets = mutableListOf<StackedBarDataSet>()
         stackedDataSets.add(StackedBarDataSet(label = "banana", dataList = DataList.DatePoints(
             listOf(DatePoint(Instant.now(), 15), DatePoint(Instant.now().minus(Period.ofWeeks(2)), 10)
