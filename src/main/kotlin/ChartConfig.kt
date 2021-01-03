@@ -23,15 +23,16 @@ abstract class Chart(
 
     protected fun update() = canvas.execute("$chartVarName.update()")
 
-    protected fun setDataSets(datasets: Collection<DataSet>) =
-        canvas.execute("${chartVarName}.data.datasets = ${datasets.toJson()}")
-
-    protected fun setLabels(labels: Collection<String>) =
-        canvas.execute("${chartVarName}.data.labels = ${labels.toJson()}")
-
     protected fun setData(data: ChartData) =
         canvas.execute("${chartVarName}.data = ${data.toJson()}")
 
+    protected fun setDataListener(data: KVal<ChartData>) {
+        data.addListener { _, newData ->
+            loading.value = false
+            setData(newData)
+            update()
+        }
+    }
 }
 
 class PieChart(canvas: CanvasElement, data: ChartData? = null) :
@@ -55,11 +56,7 @@ class LineChart(canvas: CanvasElement, data: ChartData? = null) :
     Chart(canvas, ChartConfig(ChartType.line, data)) {
 
     constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
-        data.addListener { _, newData ->
-            loading.value = false
-            setData(newData)
-            update()
-        }
+        super.setDataListener(data)
     }
 }
 
@@ -67,11 +64,7 @@ class ScatterChart(canvas: CanvasElement, data: ChartData? = null) :
     Chart(canvas, ChartConfig(ChartType.scatter, data)) {
 
     constructor(canvas: CanvasElement, data: KVal<ChartData>) : this(canvas, data.value) {
-        data.addListener { _, newData ->
-            loading.value = false
-            setData(newData)
-            update()
-        }
+        super.setDataListener(data)
     }
 }
 
@@ -117,6 +110,16 @@ class PieDataSet(
 class LineDataSet(
     val label: String? = null,
     dataList: DataList,
+    backgroundColour: Color? = randomColour(),
+    val order: Int? = null
+) : DataSet {
+    override val data = dataList.list
+    val backgroundColor = backgroundColour?.toRgbString()
+}
+
+class ScatterDataSet(
+    val label: String? = null,
+    dataList: DataList.Points,
     backgroundColour: Color? = randomColour(),
     val order: Int? = null
 ) : DataSet {

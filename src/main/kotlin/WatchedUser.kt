@@ -34,6 +34,7 @@ data class WatchedUser(
     var watchersPerRepoData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var repoSizeData: KVar<PieChart.PieData> = KVar(PieChart.PieData(emptyList(), emptyList())),
     var commitsPerWeek: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
+    var commitsSizeScatterData: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
     var commitsPerWeekAggregate: KVar<ChartData> = KVar(ChartData(datasets = emptyList())),
 ) {
     fun setValuesFromGHUser(user: GHUser) {
@@ -121,6 +122,28 @@ data class WatchedUser(
         )
         commitsPerWeekAggregate.value = ChartData(labels = commitsLabels, datasets = weeklyCommitsDataSets)
 
+        // Scatter chart of number of commits over repo size
+        /*
+        val scatterDataPoints = mutableListOf<Point>()
+        repositories.value.forEach { repo ->
+            val commitAmount = repo.statistics.participation.allCommits.sum()
+            var additions = 0L
+            var deletions = 0L
+            repo.statistics.codeFrequency.forEach { freq ->
+                additions += freq.additions
+                deletions += freq.deletions
+            }
+            val size = deletions - additions
+            scatterDataPoints.add(Point(size,commitAmount))
+        }
+        commitsSizeScatterData.value = ChartData(datasets = listOf(
+        ScatterDataSet(
+            label = "repi",
+            dataList = DataList.Points(scatterDataPoints)
+        )))
+        */
+
+        // Done loading
         loading.value = false
     }
 

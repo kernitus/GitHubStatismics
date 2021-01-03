@@ -110,6 +110,7 @@ class GitHubStatismics {
                 watchedUser.commitsPerWeekAggregate,
                 watchedUser.loading
             )
+            //scatterChartContainer("commitsSize", "Number of commits during past year over repo size", watchedUser.commitsSizeScatterData, watchedUser.loading)
         }
     }
 
@@ -221,13 +222,9 @@ class GitHubStatismics {
 
     private fun ElementCreator<*>.usernameInput(watchedUser: WatchedUser) {
         div(fomantic.ui.centered.action.input) {
-            val input = input(type = InputType.text, placeholder = "Search")
-            select(fomantic.ui.compact.selection.dropdown) {
-                option().text("Username")
-                option().text("Repository")
-            }
+            val input = input(type = InputType.text, placeholder = "Username")
             input.on.keypress { if (it.code == "Enter") handleChooseUsername(input, watchedUser) }
-            button(fomantic.ui.button).text("Search").apply {
+            button(fomantic.ui.button).text("Load").apply {
                 on.click {
                     handleChooseUsername(input, watchedUser)
                 }
